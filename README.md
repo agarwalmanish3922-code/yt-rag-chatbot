@@ -11,10 +11,11 @@ A full-stack RAG application that lets users paste a YouTube URL and ask questio
 ## Progress
 
 ### ✅ Phase 1 — Transcript Extraction
-- Built `/api/extract` endpoint
-- Extracts YouTube video ID from URL
+- Built `/api/extract` POST endpoint
+- Extracts video ID from any YouTube URL format
 - Fetches transcript using `youtube-transcript` package
-- Cleans and returns transcript text
+- Cleans transcript (removes [Music]/[Applause] tags, extra whitespace)
+- Tested successfully in Hoppscotch — returns videoId, transcript, wordCount
 
 ## Setup
 \`\`\`bash

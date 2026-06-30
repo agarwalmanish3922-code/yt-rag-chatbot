@@ -42,9 +42,9 @@ app.post('/api/extract', async (req, res) => {
       videoId,
       transcript: cleanedText,
       wordCount: cleanedText.split(' ').length
-    });
-  } catch (err) {
-    res.status(500).json({ error: 'Could not fetch transcript. Make sure the video has captions.' });
+      });   
+  } catch(err) {
+    res.status(500).json({ error: 'Could not fetch transcript. Make sure the video has captions.'});
   }
 });
 

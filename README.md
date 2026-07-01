@@ -15,24 +15,26 @@ A full-stack RAG application that lets users paste a YouTube URL and ask questio
 - Extracts video ID from any YouTube URL format
 - Fetches transcript using `youtube-transcript` package
 - Cleans transcript (removes [Music]/[Applause] tags, extra whitespace)
-- Tested successfully in Postman — returns videoId, transcript, wordCount
+- Tested successfully in Hoppscotch — returns videoId, transcript, wordCount
 
 ### ✅ Phase 2 — Chunking & Embeddings
 - Built `chunking.js` — splits transcript into 500-char chunks with 50-char overlap
 - Built `embeddings.js` — generates vector embeddings using `gemini-embedding-001` via `@google/genai`
 - Built `/api/process` endpoint — chunks transcript and embeds each chunk
-- Returns 97 chunks each with id, text, and 768-dimension embedding vector
-- Tested successfully in Postman — 200 OK
+- Returns chunks each with id, text, and embedding vector
+- Tested successfully in Hoppscotch — 200 OK
 
 ## Setup
-\`\`\`bash
+
+```bash
 cd backend
 npm install
 node index.js
-\`\`\`
+```
 
 Create a `.env` file in `backend/`:
-\`\`\`
+
+```
 PORT=5000
 GEMINI_API_KEY=your_key_here
-\`\`\`
+```

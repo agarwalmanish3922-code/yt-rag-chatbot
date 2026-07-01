@@ -1,3 +1,5 @@
+const { chunkText } = require('./chunking');
+const { getEmbedding } = require('./embeddings');
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
@@ -45,6 +47,36 @@ app.post('/api/extract', async (req, res) => {
       });   
   } catch(err) {
     res.status(500).json({ error: 'Could not fetch transcript. Make sure the video has captions.'});
+  }
+});
+
+app.post('/api/process', async (req, res) => {
+  const { transcript, videoId } = req.body;
+
+  if (!transcript) return res.status(400).json({ error: 'Transcript is required' });
+
+  try {
+    const chunks = chunkText(transcript);
+
+    const embeddedChunks = [];
+
+    for (let i = 0; i < chunks.length; i++) {
+      const embedding = await getEmbedding(chunks[i]);
+      embeddedChunks.push({
+        id: i,
+        text: chunks[i],
+        embedding
+      });
+    }
+
+    res.json({
+      videoId,
+      totalChunks: embeddedChunks.length,
+      chunks: embeddedChunks
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to process transcript' });
   }
 });
 

@@ -5,6 +5,9 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const { saveChunks } = require('./vectorStore');
 const { similaritySearch } = require('./vectorStore');
+const { generateAnswer } = require('./chat');
+const { GoogleGenAI } = require('@google/genai');
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const { YoutubeTranscript } = require('youtube-transcript');
 
 dotenv.config();
@@ -108,9 +111,54 @@ app.post('/api/search', async (req, res) => {
   }
 });
 
-app.post('/test', (req, res) => {
-  console.log(req.body);
-  res.json(req.body);
+app.post('/api/chat', async (req, res) => {
+  const { videoId, question } = req.body;
+
+  if (!videoId || !question) {
+    return res.status(400).json({ error: 'videoId and question are required' });
+  }
+
+  try {
+    // Step 1: Convert question to embedding
+    const questionEmbedding = await getEmbedding(question);
+
+    // Step 2: Find most relevant chunks
+    const relevantChunks = similaritySearch(videoId, questionEmbedding, 3);
+
+    if (relevantChunks.length === 0) {
+      return res.status(404).json({ error: 'No content found for this video. Please process it first.' });
+    }
+
+    // Step 3: Generate answer using Gemini
+    const answer = await generateAnswer(question, relevantChunks);
+
+    res.json({
+      question,
+      answer,
+      sourcechunks: relevantChunks.map(c => ({
+        id: c.id,
+        text: c.text,
+        score: c.score
+      }))
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to generate answer' });
+  }
+});
+
+app.get('/api/models', async (req, res) => {
+  try {
+    const response = await ai.models.list();
+    const models = [];
+    for await (const model of response) {
+      models.push(model.name);
+    }
+    res.json({ models });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 const PORT = process.env.PORT || 5000

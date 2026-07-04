@@ -30,6 +30,13 @@ A full-stack RAG application that lets users paste a YouTube URL and ask questio
 - Built `/api/search` endpoint — converts question to embedding, returns top 3 relevant chunks with similarity scores
 - Tested successfully — returns ranked chunks with scores in ~1.3 seconds
 
+### ✅ Phase 4 — RAG Answer Generation
+- Built `chat.js` — sends relevant chunks + question to Gemini as a structured RAG prompt
+- Built `/api/chat` endpoint — full RAG pipeline: embed → search → answer
+- Answer strictly grounded in video transcript context
+- Response includes answer + source chunks with similarity scores
+- Note: uses gemini-2.0-flash-lite-001 model via @google/genai SDK
+
 ## Setup
 
 ```bash

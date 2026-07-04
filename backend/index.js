@@ -8,6 +8,7 @@ const { similaritySearch } = require('./vectorStore');
 const { generateAnswer } = require('./chat');
 const { GoogleGenAI } = require('@google/genai');
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const { getHistory, addToHistory, clearHistory } = require('./memoryStore');
 const { YoutubeTranscript } = require('youtube-transcript');
 
 dotenv.config();
@@ -129,13 +130,20 @@ app.post('/api/chat', async (req, res) => {
       return res.status(404).json({ error: 'No content found for this video. Please process it first.' });
     }
 
-    // Step 3: Generate answer using Gemini
-    const answer = await generateAnswer(question, relevantChunks);
+    // Step 3: Get conversation history
+    const history = getHistory(videoId);
+
+    // Step 4: Generate answer with context + history
+    const answer = await generateAnswer(question, relevantChunks, history);
+
+    // Step 5: Save this Q&A to history
+    addToHistory(videoId, 'user', question);
+    addToHistory(videoId, 'assistant', answer);
 
     res.json({
       question,
       answer,
-      sourcechunks: relevantChunks.map(c => ({
+      sourceChunks: relevantChunks.map(c => ({
         id: c.id,
         text: c.text,
         score: c.score
@@ -145,6 +153,17 @@ app.post('/api/chat', async (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'Failed to generate answer' });
   }
+});
+
+app.post('/api/clear-history', (req, res) => {
+  const { videoId } = req.body;
+
+  if (!videoId) {
+    return res.status(400).json({ error: 'videoId is required' });
+  }
+
+  clearHistory(videoId);
+  res.json({ message: 'Conversation history cleared successfully' });
 });
 
 app.get('/api/models', async (req, res) => {

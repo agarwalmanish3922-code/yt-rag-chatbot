@@ -37,6 +37,13 @@ A full-stack RAG application that lets users paste a YouTube URL and ask questio
 - Response includes answer + source chunks with similarity scores
 - Note: uses gemini-2.0-flash-lite-001 model via @google/genai SDK
 
+### ✅ Phase 5 — Chat Memory
+- Built `memoryStore.js` — stores conversation history per video in memory
+- Updated `chat.js` — includes conversation history in every Gemini prompt
+- Updated `/api/chat` — saves each Q&A pair to history after responding
+- Added `/api/clear-history` endpoint — resets conversation for fresh start
+- Gemini can now understand follow-up questions and references like "it", "that"
+
 ## Setup
 
 ```bash

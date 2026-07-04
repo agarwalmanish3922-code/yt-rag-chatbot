@@ -3,8 +3,6 @@ dotenv.config();
 
 const { GoogleGenAI } = require('@google/genai');
 
-console.log("KEY STARTS WITH:", process.env.GEMINI_API_KEY?.slice(0, 5));
-
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 async function getEmbedding(text) {

@@ -1,17 +1,17 @@
-const { chunkText } = require('./chunking');
-const { getEmbedding } = require('./embeddings');
+const dotenv = require('dotenv');
+dotenv.config();
+
 const express = require('express');
 const cors = require('cors');
-const dotenv = require('dotenv');
-const { saveChunks } = require('./vectorStore');
-const { similaritySearch } = require('./vectorStore');
-const { generateAnswer } = require('./chat');
-const { GoogleGenAI } = require('@google/genai');
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-const { getHistory, addToHistory, clearHistory } = require('./memoryStore');
 const { YoutubeTranscript } = require('youtube-transcript');
+const { chunkText } = require('./chunking');
+const { getEmbedding } = require('./embeddings');
+const { saveChunks, similaritySearch } = require('./vectorStore');
+const { generateAnswer } = require('./chat');
+const { getHistory, addToHistory, clearHistory } = require('./memoryStore');
+const { GoogleGenAI } = require('@google/genai');
 
-dotenv.config();
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const app = express();
 app.use(cors());
@@ -34,7 +34,6 @@ function cleanTranscript(transcriptArr) {
 }
 
 app.post('/api/extract', async (req, res) => {
-  console.log("BODY =", req.body);
   const { url } = req.body;
 
   if (!url) return res.status(400).json({ error: 'URL is required' });
@@ -166,24 +165,6 @@ app.post('/api/clear-history', (req, res) => {
   res.json({ message: 'Conversation history cleared successfully' });
 });
 
-app.get('/api/models', async (req, res) => {
-  try {
-    const response = await ai.models.list();
-    const models = [];
-    for await (const model of response) {
-      models.push(model.name);
-    }
-    res.json({ models });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.get('/api/history/:videoId', (req, res) => {
-  const history = getHistory(req.params.videoId);
-  res.json({ history });
-});
 
 const PORT = process.env.PORT || 5000
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

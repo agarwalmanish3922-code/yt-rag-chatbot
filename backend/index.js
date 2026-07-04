@@ -180,5 +180,10 @@ app.get('/api/models', async (req, res) => {
   }
 });
 
+app.get('/api/history/:videoId', (req, res) => {
+  const history = getHistory(req.params.videoId);
+  res.json({ history });
+});
+
 const PORT = process.env.PORT || 5000
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

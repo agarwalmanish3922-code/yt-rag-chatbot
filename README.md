@@ -24,6 +24,12 @@ A full-stack RAG application that lets users paste a YouTube URL and ask questio
 - Returns chunks each with id, text, and embedding vector
 - Tested successfully in Hoppscotch — 200 OK
 
+### ✅ Phase 3 — Vector Storage & Similarity Search
+- Built `vectorStore.js` — in-memory vector store with cosine similarity
+- Updated `/api/process` to save embedded chunks to memory
+- Built `/api/search` endpoint — converts question to embedding, returns top 3 relevant chunks with similarity scores
+- Tested successfully — returns ranked chunks with scores in ~1.3 seconds
+
 ## Setup
 
 ```bash

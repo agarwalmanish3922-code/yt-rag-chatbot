@@ -3,14 +3,16 @@ const { getEmbedding } = require('./embeddings');
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const { saveChunks } = require('./vectorStore');
+const { similaritySearch } = require('./vectorStore');
 const { YoutubeTranscript } = require('youtube-transcript');
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 
 function getVideoId(url) {
@@ -69,14 +71,40 @@ app.post('/api/process', async (req, res) => {
       });
     }
 
+    // NEW LINE — save to memory after embedding
+    saveChunks(videoId, embeddedChunks);
     res.json({
       videoId,
       totalChunks: embeddedChunks.length,
-      chunks: embeddedChunks
+      message: 'Video processed and stored successfully'
     });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to process transcript' });
+  }
+});
+
+app.post('/api/search', async (req, res) => {
+  const { videoId, question } = req.body;
+
+  if (!videoId || !question) {
+    return res.status(400).json({ error: 'videoId and question are required' });
+  }
+
+  try {
+    // Convert question to embedding
+    const questionEmbedding = await getEmbedding(question);
+
+    // Find top 3 most relevant chunks
+    const results = similaritySearch(videoId, questionEmbedding);
+
+    res.json({
+      question,
+      results
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Search failed' });
   }
 });
 

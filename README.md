@@ -50,7 +50,14 @@ yt-rag-chatbot/
 │   ├── memoryStore.js    # Conversation history management
 │   ├── chat.js           # RAG prompt & Gemini answer generation
 │   └── .env              # Environment variables (not committed)
-└── frontend/             # React app (coming soon)
+├── frontend/
+│   ├── src/
+│   │   ├── App.js        # Main React component
+│   │   ├── App.css       # Animations and styling
+│   │   └── index.js      # React entry point
+│   └── public/
+├── assets/               # Screenshots and demo GIF
+└── README.md
 ```
 
 ## ⚙️ Setup & Installation
@@ -58,13 +65,16 @@ yt-rag-chatbot/
 ```bash
 # Clone the repo
 git clone https://github.com/agarwalmanish3922-code/yt-rag-chatbot.git
+
+# Setup backend
 cd yt-rag-chatbot/backend
-
-# Install dependencies
 npm install
-
-# Start the server
 node index.js
+
+# Setup frontend (open a new terminal)
+cd yt-rag-chatbot/frontend
+npm install
+npm start
 ```
 
 Create a `.env` file in `backend/`:
@@ -91,7 +101,7 @@ GEMINI_API_KEY=your_gemini_api_key_here
 - Fetches and cleans transcript using `youtube-transcript`
 
 ### ✅ Phase 2 — Chunking & Embeddings
-- Built `chunking.js` — 500-char chunks with 50-char overlap
+- Built `chunking.js` — 1000-char chunks with 100-char overlap
 - Built `embeddings.js` — vector embeddings via `gemini-embedding-001`
 - Built `/api/process` endpoint
 
@@ -102,10 +112,12 @@ GEMINI_API_KEY=your_gemini_api_key_here
 ### ✅ Phase 4 — RAG Answer Generation
 - Built `chat.js` — structured RAG prompt with Gemini
 - Built `/api/chat` — full pipeline: embed → search → answer
+- Model fallback system — tries multiple models if quota exceeded
 
 ### ✅ Phase 5 — Chat Memory
 - Built `memoryStore.js` — conversation history per video
 - Gemini understands follow-up questions using history
+- Built `/api/clear-history` endpoint
 
 ### ✅ Phase 6 — React Frontend
 - Built modern React UI with glassmorphism design

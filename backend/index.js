@@ -72,6 +72,8 @@ app.post('/api/process', async (req, res) => {
         text: chunks[i],
         embedding
       });
+      // Small delay to avoid hitting rate limits
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
 
     // NEW LINE — save to memory after embedding

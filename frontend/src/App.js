@@ -99,13 +99,16 @@ function App() {
   };
 
   const handleClear = async () => {
-    if (!videoId) return;
-    await axios.post(`${API_BASE}/api/clear-history`, { videoId });
-    setMessages([{
-      role: 'assistant',
-      content: '🔄 Conversation cleared. Ask me anything about the video!',
-      timestamp: new Date()
-    }]);
+    if (videoId) {
+      await axios.post(`${API_BASE}/api/clear-history`, { videoId });
+    }
+    setUrl('');
+    setVideoId(null);
+    setVideoTitle('');
+    setMessages([]);
+    setQuestion('');
+    setError('');
+    setStage('idle');
   };
 
   return (

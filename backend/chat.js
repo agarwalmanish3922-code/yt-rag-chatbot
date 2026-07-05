@@ -5,6 +5,13 @@ const { GoogleGenAI } = require('@google/genai');
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
+const models = [
+  'gemini-2.0-flash-lite-001',
+  'gemini-2.0-flash',
+  'gemini-2.5-flash',
+  'gemini-1.5-flash-latest'
+];
+
 async function generateAnswer(question, relevantChunks, history) {
   // Build context from relevant chunks
   const context = relevantChunks
@@ -37,12 +44,24 @@ User: ${question}
 
 Answer:`;
 
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.0-flash-lite-001',
-    contents: prompt
-  });
+  // Try each model until one works
+  for (const model of models) {
+    try {
+      const response = await ai.models.generateContent({
+        model,
+        contents: prompt
+      });
+      return response.text;
+    } catch (err) {
+      if (err.status === 429 || err.status===404) {
+        console.log(`Model ${model} failed (${err.status}), trying next...`);
+        continue;
+      }
+      throw err;
+    }
+  }
 
-  return response.text;
+  throw new Error('All models quota exceeded. Please wait a few minutes and try again.');
 }
 
 module.exports = { generateAnswer };

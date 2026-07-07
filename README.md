@@ -35,7 +35,7 @@ An AI-powered full-stack application that lets students paste a YouTube URL and 
 - ✅ RAG-based answer generation
 - ✅ Chat memory for follow-up questions
 - ✅ Modern React frontend with animations
-- 🔲 Video summarization
+- ✅ Video summarization
 - 🔲 Smart Video Trimmer — skip unnecessary parts
 - 🔲 Notes generation
 - 🔲 Timestamp-based answers
@@ -139,8 +139,15 @@ GEMINI_API_KEY=your_gemini_api_key_here
 - Fully connected to backend APIs
 - Responsive design for mobile and desktop
 
+### ✅ Phase 7 — Video Summarization
+- Added `summarizeVideo()` function in `chat.js`
+- Built `/api/summarize` endpoint
+- Added 📝 Summarize Video button in frontend
+- Structured summary with Main Topic, Key Points, Takeaways, Important Terms
+- Multi-model fallback for quota handling
+- Summary card with close button in UI
+
 ## 🗺️ Upcoming Phases
-- 🔲 Phase 7 — Video Summarization
 - 🔲 Phase 8 — Smart Video Trimmer
 - 🔲 Phase 9 — Notes Generation
 - 🔲 Phase 10 — Timestamp-based Answers

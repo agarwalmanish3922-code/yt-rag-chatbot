@@ -1,6 +1,7 @@
-# 🎬 YouTube Video RAG Chatbot
+# 🎬 YouTube Learning Assistant
+### *Learn smarter. Skip the fluff. Keep the knowledge.*
 
-An AI-powered full-stack application that lets users paste a YouTube URL and have an intelligent conversation about the video content using RAG (Retrieval-Augmented Generation).
+An AI-powered full-stack application that lets students paste a YouTube URL and have an intelligent conversation about the video content, generate smart notes, skip unnecessary parts, and save valuable study time — all powered by RAG (Retrieval-Augmented Generation).
 
 ## 🚀 Live Demo
 > Coming soon after deployment
@@ -13,6 +14,8 @@ An AI-powered full-stack application that lets users paste a YouTube URL and hav
 5. Cosine similarity search finds the most relevant chunks
 6. Gemini LLM generates an answer strictly based on video content
 7. Chat memory allows natural follow-up questions
+8. Smart trimmer identifies and skips unnecessary parts of the video
+9. Notes generator creates structured study notes from the video
 
 ## 🛠️ Tech Stack
 | Layer | Technology |
@@ -33,9 +36,12 @@ An AI-powered full-stack application that lets users paste a YouTube URL and hav
 - ✅ Chat memory for follow-up questions
 - ✅ Modern React frontend with animations
 - 🔲 Video summarization
+- 🔲 Smart Video Trimmer — skip unnecessary parts
+- 🔲 Notes generation
 - 🔲 Timestamp-based answers
-- 🔲 Quiz generation
-- 🔲 Notes & PDF export
+- 🔲 MCQ & Quiz generation
+- 🔲 Interview questions generator
+- 🔲 PDF export
 - 🔲 Multi-video support
 - 🔲 User authentication
 
@@ -112,7 +118,7 @@ GEMINI_API_KEY=your_gemini_api_key_here
 ### ✅ Phase 4 — RAG Answer Generation
 - Built `chat.js` — structured RAG prompt with Gemini
 - Built `/api/chat` — full pipeline: embed → search → answer
-- Model fallback system — tries multiple models if quota exceeded
+- Multi-model fallback system — tries multiple Gemini models if quota exceeded
 
 ### ✅ Phase 5 — Chat Memory
 - Built `memoryStore.js` — conversation history per video
@@ -129,8 +135,24 @@ GEMINI_API_KEY=your_gemini_api_key_here
 - Loading animation with spinning rings and step indicators
 - Chat interface with typing indicator and message animations
 - Feature cards on landing page
+- New Chat button to switch videos without refresh
 - Fully connected to backend APIs
 - Responsive design for mobile and desktop
+
+## 🗺️ Upcoming Phases
+- 🔲 Phase 7 — Video Summarization
+- 🔲 Phase 8 — Smart Video Trimmer
+- 🔲 Phase 9 — Notes Generation
+- 🔲 Phase 10 — Timestamp-based Answers
+- 🔲 Phase 11 — MCQ Generation
+- 🔲 Phase 12 — Interview Questions Generator
+- 🔲 Phase 13 — Quiz Me Mode
+- 🔲 Phase 14 — PDF Export
+- 🔲 Phase 15 — Multi-video Support
+- 🔲 Phase 16 — User Authentication
+- 🔲 Phase 17 — Conversation History
+- 🔲 Phase 18 — Deployment
+- 🔲 Phase 19 — Final Polish & Demo
 
 ## 🤝 Author
 **Manish Agarwal**

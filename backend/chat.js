@@ -64,4 +64,47 @@ Answer:`;
   throw new Error('All models quota exceeded. Please wait a few minutes and try again.');
 }
 
-module.exports = { generateAnswer };
+async function summarizeVideo(transcript) {
+  const prompt = `You are an expert at summarizing educational YouTube videos.
+
+Given the following video transcript, create a clear and structured summary.
+
+Format your response exactly like this:
+
+🎯 MAIN TOPIC
+[One sentence describing what this video is about]
+
+📌 KEY POINTS
+[5-8 bullet points covering the most important concepts]
+
+💡 KEY TAKEAWAYS
+[3-5 practical takeaways the viewer should remember]
+
+🔑 IMPORTANT TERMS
+[List any important terms or concepts mentioned with brief definitions]
+
+Keep the summary concise, educational, and easy to understand.
+
+TRANSCRIPT:
+${transcript.slice(0, 8000)}`;
+
+  for (const model of models) {
+    try {
+      const response = await ai.models.generateContent({
+        model,
+        contents: prompt
+      });
+      return response.text;
+    } catch (err) {
+      if (err.status === 429 || err.status === 404) {
+        console.log(`Model ${model} failed (${err.status}), trying next...`);
+        continue;
+      }
+      throw err;
+    }
+  }
+
+  throw new Error('All models quota exceeded. Please wait a few minutes.');
+}
+
+module.exports = { generateAnswer, summarizeVideo };

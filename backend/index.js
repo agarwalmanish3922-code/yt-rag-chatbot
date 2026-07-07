@@ -7,9 +7,9 @@ const { YoutubeTranscript } = require('youtube-transcript');
 const { chunkText } = require('./chunking');
 const { getEmbedding } = require('./embeddings');
 const { saveChunks, similaritySearch } = require('./vectorStore');
-const { generateAnswer } = require('./chat');
 const { getHistory, addToHistory, clearHistory } = require('./memoryStore');
 const { GoogleGenAI } = require('@google/genai');
+const { generateAnswer, summarizeVideo } = require('./chat');
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -165,6 +165,27 @@ app.post('/api/clear-history', (req, res) => {
 
   clearHistory(videoId);
   res.json({ message: 'Conversation history cleared successfully' });
+});
+
+app.post('/api/summarize', async (req, res) => {
+  const { videoId, transcript } = req.body;
+
+  if (!videoId || !transcript) {
+    return res.status(400).json({ error: 'videoId and transcript are required' });
+  }
+
+  try {
+    console.log(`Summarizing video: ${videoId}`);
+    const summary = await summarizeVideo(transcript);
+
+    res.json({
+      videoId,
+      summary
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to summarize video' });
+  }
 });
 
 

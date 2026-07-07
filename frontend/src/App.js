@@ -14,6 +14,9 @@ function App() {
   const [isAsking, setIsAsking] = useState(false);
   const [error, setError] = useState('');
   const [stage, setStage] = useState('idle');
+  const [transcript, setTranscript] = useState('');
+  const [summary, setSummary] = useState('');
+  const [isSummarizing, setIsSummarizing] = useState(false);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -26,12 +29,14 @@ function App() {
     setIsProcessing(true);
     setStage('extracting');
     setMessages([]);
+    setSummary('');
 
     try {
       const extractRes = await axios.post(`${API_BASE}/api/extract`, { url });
       const { videoId: vid, transcript } = extractRes.data;
       setVideoId(vid);
       setVideoTitle(`Video: ${vid}`);
+      setTranscript(transcript);
       setStage('processing');
 
       await axios.post(`${API_BASE}/api/process`, {
@@ -98,6 +103,25 @@ function App() {
     }
   };
 
+  const handleSummarize = async () => {
+    if (!videoId || !transcript || isSummarizing) return;
+
+    setIsSummarizing(true);
+    setSummary('');
+
+    try {
+      const res = await axios.post(`${API_BASE}/api/summarize`, {
+        videoId,
+        transcript
+      });
+      setSummary(res.data.summary);
+    } catch (err) {
+      setSummary('❌ Failed to generate summary. Please try again.');
+    } finally {
+      setIsSummarizing(false);
+    }
+  };
+
   const handleClear = async () => {
     if (videoId) {
       await axios.post(`${API_BASE}/api/clear-history`, { videoId });
@@ -109,6 +133,8 @@ function App() {
     setQuestion('');
     setError('');
     setStage('idle');
+    setTranscript('');
+    setSummary('');
   };
 
   return (
@@ -170,8 +196,8 @@ function App() {
           <div className="logo">
             <span className="logo-icon">🎬</span>
             <div>
-              <h1 className="logo-title">YT RAG Chatbot</h1>
-              <p className="logo-sub">AI-powered video conversations</p>
+              <h1 className="logo-title">YouTube Learning Assistant</h1>
+              <p className="logo-sub">Learn smarter. Skip the fluff. Keep the knowledge.</p>
             </div>
           </div>
           {videoId && (
@@ -183,7 +209,7 @@ function App() {
         </div>
       </header>
 
-            {/* Stats bar */}
+      {/* Stats bar */}
       <div className="stats-bar">
         <div className="stat-item">
           <span className="stat-value">RAG</span>
@@ -285,11 +311,42 @@ function App() {
             {error && <p className="error-msg">⚠️ {error}</p>}
 
             {stage === 'ready' && (
-              <div className="video-badge">
-                <span className="badge-dot"></span>
-                Video ready — {videoTitle}
+              <div className="ready-section">
+                <div className="video-badge">
+                  <span className="badge-dot"></span>
+                  Video ready — {videoTitle}
+                </div>
+                <button
+                  className={`summarize-btn ${isSummarizing ? 'loading' : ''}`}
+                  onClick={handleSummarize}
+                  disabled={isSummarizing}
+                >
+                  {isSummarizing ? (
+                    <span className="btn-loading">
+                      <span className="spinner"></span>
+                      Summarizing...
+                    </span>
+                  ) : '📝 Summarize Video'}
+                </button>
               </div>
             )}
+
+            {/* Summary Display */}
+            {summary && (
+              <div className="summary-card">
+                <div className="summary-header">
+                  <h3 className="summary-title">📺 Video Summary</h3>
+                  <button
+                    className="summary-close"
+                    onClick={() => setSummary('')}
+                  >✕</button>
+                </div>
+                <div className="summary-content">
+                  {summary}
+                </div>
+              </div>
+            )}
+
           </div>
         </div>
 
@@ -362,7 +419,9 @@ function App() {
               { icon: '🧠', title: 'RAG Powered', desc: 'Retrieval-Augmented Generation for accurate, grounded answers' },
               { icon: '⚡', title: 'Fast Search', desc: 'Cosine similarity search across the full video transcript' },
               { icon: '💬', title: 'Chat Memory', desc: 'Remembers context for natural follow-up conversations' },
-              { icon: '🎯', title: 'Source Grounded', desc: 'Every answer is strictly based on video content only' }
+              { icon: '🎯', title: 'Source Grounded', desc: 'Every answer is strictly based on video content only' },
+              { icon: '📝', title: 'Smart Notes', desc: 'Generate structured study notes from any video' },
+              { icon: '✂️', title: 'Video Trimmer', desc: 'Skip the fluff — watch only the valuable parts' }
             ].map((f, i) => (
               <div key={i} className="feature-card">
                 <span className="feature-icon">{f.icon}</span>

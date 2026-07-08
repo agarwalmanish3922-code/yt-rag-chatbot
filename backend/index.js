@@ -9,6 +9,7 @@ const { getEmbedding } = require('./embeddings');
 const { saveChunks, similaritySearch } = require('./vectorStore');
 const { getHistory, addToHistory, clearHistory } = require('./memoryStore');
 const { GoogleGenAI } = require('@google/genai');
+const { trimVideo } = require('./trimmer');
 const { generateAnswer, summarizeVideo } = require('./chat');
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -45,13 +46,21 @@ app.post('/api/extract', async (req, res) => {
     const transcriptArr = await YoutubeTranscript.fetchTranscript(videoId);
     const cleanedText = cleanTranscript(transcriptArr);
 
+    // Also return raw transcript with timestamps for Smart Trimmer
+    const rawTranscript = transcriptArr.map(item => ({
+      text: item.text,
+      offset: Math.floor(item.offset / 1000), // convert ms to seconds
+      duration: Math.floor(item.duration / 1000)
+    }));
+
     res.json({
       videoId,
       transcript: cleanedText,
+      rawTranscript,
       wordCount: cleanedText.split(' ').length
-      });   
-  } catch(err) {
-    res.status(500).json({ error: 'Could not fetch transcript. Make sure the video has captions.'});
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Could not fetch transcript. Make sure the video has captions.' });
   }
 });
 
@@ -185,6 +194,27 @@ app.post('/api/summarize', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to summarize video' });
+  }
+});
+
+app.post('/api/trim', async (req, res) => {
+  const { videoId, rawTranscript } = req.body;
+
+  if (!videoId || !rawTranscript) {
+    return res.status(400).json({ error: 'videoId and rawTranscript are required' });
+  }
+
+  try {
+    console.log(`Trimming video: ${videoId} — ${rawTranscript.length} transcript items`);
+    const result = await trimVideo(rawTranscript, videoId);
+
+    res.json({
+      videoId,
+      ...result
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to trim video' });
   }
 });
 

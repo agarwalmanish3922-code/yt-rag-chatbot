@@ -15,8 +15,11 @@ function App() {
   const [error, setError] = useState('');
   const [stage, setStage] = useState('idle');
   const [transcript, setTranscript] = useState('');
+  const [rawTranscript, setRawTranscript] = useState([]);
   const [summary, setSummary] = useState('');
   const [isSummarizing, setIsSummarizing] = useState(false);
+  const [trimResult, setTrimResult] = useState(null);
+  const [isTrimming, setIsTrimming] = useState(false);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -30,13 +33,15 @@ function App() {
     setStage('extracting');
     setMessages([]);
     setSummary('');
+    setTrimResult(null);
 
     try {
       const extractRes = await axios.post(`${API_BASE}/api/extract`, { url });
-      const { videoId: vid, transcript } = extractRes.data;
+      const { videoId: vid, transcript, rawTranscript } = extractRes.data;
       setVideoId(vid);
       setVideoTitle(`Video: ${vid}`);
       setTranscript(transcript);
+      setRawTranscript(rawTranscript);
       setStage('processing');
 
       await axios.post(`${API_BASE}/api/process`, {
@@ -122,6 +127,25 @@ function App() {
     }
   };
 
+  const handleTrim = async () => {
+    if (!videoId || !rawTranscript.length || isTrimming) return;
+
+    setIsTrimming(true);
+    setTrimResult(null);
+
+    try {
+      const res = await axios.post(`${API_BASE}/api/trim`, {
+        videoId,
+        rawTranscript
+      });
+      setTrimResult(res.data);
+    } catch (err) {
+      alert('Failed to trim video. Please try again.');
+    } finally {
+      setIsTrimming(false);
+    }
+  };
+
   const handleClear = async () => {
     if (videoId) {
       await axios.post(`${API_BASE}/api/clear-history`, { videoId });
@@ -134,7 +158,9 @@ function App() {
     setError('');
     setStage('idle');
     setTranscript('');
+    setRawTranscript([]);
     setSummary('');
+    setTrimResult(null);
   };
 
   return (
@@ -316,18 +342,35 @@ function App() {
                   <span className="badge-dot"></span>
                   Video ready — {videoTitle}
                 </div>
-                <button
-                  className={`summarize-btn ${isSummarizing ? 'loading' : ''}`}
-                  onClick={handleSummarize}
-                  disabled={isSummarizing}
-                >
-                  {isSummarizing ? (
-                    <span className="btn-loading">
-                      <span className="spinner"></span>
-                      Summarizing...
-                    </span>
-                  ) : '📝 Summarize Video'}
-                </button>
+                <div className="action-buttons">
+                  <button
+                    className={`summarize-btn ${isSummarizing ? 'loading' : ''}`}
+                    onClick={handleSummarize}
+                    disabled={isSummarizing}
+                  >
+                    {isSummarizing ? (
+                      <span className="btn-loading">
+                        <span className="spinner"></span>
+                        Summarizing...
+                      </span>
+                    ) : '📝 Summarize'}
+                  </button>
+                  <button
+                    className={`trim-btn ${isTrimming ? 'loading' : ''}`}
+                    onClick={handleTrim}
+                    disabled={isTrimming}
+                  >
+                    {isTrimming ? (
+                      <span className="btn-loading">
+                        <span className="spinner"></span>
+                        Trimming...
+                      </span>
+                    ) : '✂️ Smart Trim'}
+                    {isTrimming && (
+                        <p className="trim-hint">⏳ Analyzing video segments... This takes 2-3 minutes for longer videos.</p>
+                    )}
+                  </button>
+                </div>
               </div>
             )}
 
@@ -344,6 +387,61 @@ function App() {
                 <div className="summary-content">
                   {summary}
                 </div>
+              </div>
+            )}
+
+            {/* Trim Results */}
+            {trimResult && (
+              <div className="trim-card">
+                <div className="trim-header">
+                  <h3 className="trim-title">✂️ Smart Video Trimmer</h3>
+                  <button
+                    className="summary-close"
+                    onClick={() => setTrimResult(null)}
+                  >✕</button>
+                </div>
+
+                <div className="trim-stats">
+                  <div className="trim-stat">
+                    <span className="trim-stat-value">{trimResult.totalDuration}</span>
+                    <span className="trim-stat-label">Original</span>
+                  </div>
+                  <div className="trim-stat highlight">
+                    <span className="trim-stat-value">{trimResult.contentDuration}</span>
+                    <span className="trim-stat-label">Content Only</span>
+                  </div>
+                  <div className="trim-stat saved">
+                    <span className="trim-stat-value">{trimResult.timeSaved}</span>
+                    <span className="trim-stat-label">Time Saved</span>
+                  </div>
+                  <div className="trim-stat percent">
+                    <span className="trim-stat-value">{trimResult.timeSavedPercent}%</span>
+                    <span className="trim-stat-label">Shorter</span>
+                  </div>
+                </div>
+
+                <p className="trim-subtitle">📌 Watch these segments only:</p>
+
+                <div className="trim-segments">
+                  {trimResult.watchSegments.map((seg, idx) => (
+                      <a
+                      key={idx}
+                      href={seg.youtubeLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="trim-segment"
+                    >
+                      <div className="segment-number">{seg.index}</div>
+                      <div className="segment-info">
+                        <span className="segment-time">▶ {seg.startTime} — {seg.endTime}</span>
+                        <span className="segment-duration">{seg.duration}</span>
+                      </div>
+                      <div className="segment-arrow">→</div>
+                    </a>
+                  ))}
+                </div>
+
+                <p className="trim-tagline">⚡ Skip the fluff. Keep the knowledge.</p>
               </div>
             )}
 

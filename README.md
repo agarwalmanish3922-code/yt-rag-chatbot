@@ -36,7 +36,7 @@ An AI-powered full-stack application that lets students paste a YouTube URL and 
 - ✅ Chat memory for follow-up questions
 - ✅ Modern React frontend with animations
 - ✅ Video summarization
-- 🔲 Smart Video Trimmer — skip unnecessary parts
+- ✅ Smart Video Trimmer — skip unnecessary parts
 - 🔲 Notes generation
 - 🔲 Timestamp-based answers
 - 🔲 MCQ & Quiz generation
@@ -147,8 +147,18 @@ GEMINI_API_KEY=your_gemini_api_key_here
 - Multi-model fallback for quota handling
 - Summary card with close button in UI
 
+### ✅ Phase 8 — Smart Video Trimmer
+- Built `trimmer.js` — single API call approach for any video length
+- Adaptive sampling — 150 sample points regardless of video length
+- Validates results — rejects unrealistic outputs automatically
+- Merges close segments — no tiny fragments
+- Smart fallback — trims intro/outro if Gemini fails
+- Returns clickable YouTube timestamp links
+- Works for videos of any length
+- Tagline: "Skip the fluff. Keep the knowledge."
+
+
 ## 🗺️ Upcoming Phases
-- 🔲 Phase 8 — Smart Video Trimmer
 - 🔲 Phase 9 — Notes Generation
 - 🔲 Phase 10 — Timestamp-based Answers
 - 🔲 Phase 11 — MCQ Generation

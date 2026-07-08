@@ -55,6 +55,7 @@ yt-rag-chatbot/
 │   ├── vectorStore.js    # In-memory vector storage & cosine similarity
 │   ├── memoryStore.js    # Conversation history management
 │   ├── chat.js           # RAG prompt & Gemini answer generation
+│   ├── trimmer.js        # Smart Video Trimmer logic
 │   └── .env              # Environment variables (not committed)
 ├── frontend/
 │   ├── src/
@@ -98,6 +99,8 @@ GEMINI_API_KEY=your_gemini_api_key_here
 | POST | `/api/search` | Similarity search on stored chunks |
 | POST | `/api/chat` | Full RAG pipeline — ask a question |
 | POST | `/api/clear-history` | Reset conversation history |
+| POST | `/api/summarize` | Generate structured video summary |
+| POST | `/api/trim` | Smart trim — identify content segments |
 
 ## 📈 Progress
 
@@ -105,11 +108,13 @@ GEMINI_API_KEY=your_gemini_api_key_here
 - Built `/api/extract` POST endpoint
 - Extracts video ID from any YouTube URL format
 - Fetches and cleans transcript using `youtube-transcript`
+- Also returns raw transcript with timestamps for Smart Trimmer
 
 ### ✅ Phase 2 — Chunking & Embeddings
 - Built `chunking.js` — 1000-char chunks with 100-char overlap
 - Built `embeddings.js` — vector embeddings via `gemini-embedding-001`
-- Built `/api/process` endpoint
+- Built `/api/process` endpoint with 200ms delay between calls
+- Max 50 chunks per video to prevent quota exhaustion
 
 ### ✅ Phase 3 — Vector Storage & Similarity Search
 - Built `vectorStore.js` — in-memory store with cosine similarity
@@ -142,21 +147,21 @@ GEMINI_API_KEY=your_gemini_api_key_here
 ### ✅ Phase 7 — Video Summarization
 - Added `summarizeVideo()` function in `chat.js`
 - Built `/api/summarize` endpoint
-- Added 📝 Summarize Video button in frontend
+- Added 📝 Summarize button in frontend
 - Structured summary with Main Topic, Key Points, Takeaways, Important Terms
 - Multi-model fallback for quota handling
 - Summary card with close button in UI
 
 ### ✅ Phase 8 — Smart Video Trimmer
 - Built `trimmer.js` — single API call approach for any video length
-- Adaptive sampling — 150 sample points regardless of video length
-- Validates results — rejects unrealistic outputs automatically
-- Merges close segments — no tiny fragments
+- Adaptive sampling — always takes ~150 sample points regardless of video length
+- Validates results — rejects unrealistic outputs (0% or 99% saved)
+- Merges close segments — no tiny fragments under 60 seconds
 - Smart fallback — trims intro/outro if Gemini fails
-- Returns clickable YouTube timestamp links
-- Works for videos of any length
+- Returns clickable YouTube timestamp deep links
+- Shows time saved stats (original vs content duration + percentage)
+- Works for videos of any length — tested on 5+ hour videos
 - Tagline: "Skip the fluff. Keep the knowledge."
-
 
 ## 🗺️ Upcoming Phases
 - 🔲 Phase 9 — Notes Generation
@@ -166,10 +171,11 @@ GEMINI_API_KEY=your_gemini_api_key_here
 - 🔲 Phase 13 — Quiz Me Mode
 - 🔲 Phase 14 — PDF Export
 - 🔲 Phase 15 — Multi-video Support
-- 🔲 Phase 16 — User Authentication
-- 🔲 Phase 17 — Conversation History
-- 🔲 Phase 18 — Deployment
-- 🔲 Phase 19 — Final Polish & Demo
+- 🔲 Phase 16 — 3D Neural Interface Frontend Redesign
+- 🔲 Phase 17 — User Authentication
+- 🔲 Phase 18 — Conversation History
+- 🔲 Phase 19 — Deployment
+- 🔲 Phase 20 — Final Polish & Demo
 
 ## 🤝 Author
 **Manish Agarwal**

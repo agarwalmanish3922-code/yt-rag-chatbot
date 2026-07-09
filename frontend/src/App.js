@@ -20,6 +20,8 @@ function App() {
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [trimResult, setTrimResult] = useState(null);
   const [isTrimming, setIsTrimming] = useState(false);
+  const [notes, setNotes] = useState('');
+  const [isGeneratingNotes, setIsGeneratingNotes] = useState(false);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -34,6 +36,7 @@ function App() {
     setMessages([]);
     setSummary('');
     setTrimResult(null);
+    setNotes('');
 
     try {
       const extractRes = await axios.post(`${API_BASE}/api/extract`, { url });
@@ -110,10 +113,8 @@ function App() {
 
   const handleSummarize = async () => {
     if (!videoId || !transcript || isSummarizing) return;
-
     setIsSummarizing(true);
     setSummary('');
-
     try {
       const res = await axios.post(`${API_BASE}/api/summarize`, {
         videoId,
@@ -129,10 +130,8 @@ function App() {
 
   const handleTrim = async () => {
     if (!videoId || !rawTranscript.length || isTrimming) return;
-
     setIsTrimming(true);
     setTrimResult(null);
-
     try {
       const res = await axios.post(`${API_BASE}/api/trim`, {
         videoId,
@@ -143,6 +142,23 @@ function App() {
       alert('Failed to trim video. Please try again.');
     } finally {
       setIsTrimming(false);
+    }
+  };
+
+  const handleGenerateNotes = async () => {
+    if (!videoId || !transcript || isGeneratingNotes) return;
+    setIsGeneratingNotes(true);
+    setNotes('');
+    try {
+      const res = await axios.post(`${API_BASE}/api/notes`, {
+        videoId,
+        transcript
+      });
+      setNotes(res.data.notes);
+    } catch (err) {
+      setNotes('❌ Failed to generate notes. Please try again.');
+    } finally {
+      setIsGeneratingNotes(false);
     }
   };
 
@@ -161,12 +177,12 @@ function App() {
     setRawTranscript([]);
     setSummary('');
     setTrimResult(null);
+    setNotes('');
   };
 
   return (
     <div className="app">
 
-      {/* Animated background orbs */}
       <div className="bg-animation">
         <div className="bg-orb orb1"></div>
         <div className="bg-orb orb2"></div>
@@ -174,23 +190,19 @@ function App() {
         <div className="bg-orb orb4"></div>
       </div>
 
-      {/* Grid overlay */}
       <div className="bg-grid"></div>
 
-      {/* Floating particles */}
       <div className="particles">
         {[...Array(15)].map((_, i) => (
           <div key={i} className="particle"></div>
         ))}
       </div>
 
-      {/* Corner decorations */}
       <div className="corner-decoration top-left"></div>
       <div className="corner-decoration top-right"></div>
       <div className="corner-decoration bottom-left"></div>
       <div className="corner-decoration bottom-right"></div>
 
-      {/* Left side decoration */}
       <div className="side-decoration left">
         <div className="side-line"></div>
         <div className="side-dot"></div>
@@ -203,7 +215,6 @@ function App() {
         <div className="side-line"></div>
       </div>
 
-      {/* Right side decoration */}
       <div className="side-decoration right">
         <div className="side-line"></div>
         <div className="side-dot"></div>
@@ -216,7 +227,6 @@ function App() {
         <div className="side-line"></div>
       </div>
 
-      {/* Header */}
       <header className="header">
         <div className="header-content">
           <div className="logo">
@@ -235,7 +245,6 @@ function App() {
         </div>
       </header>
 
-      {/* Stats bar */}
       <div className="stats-bar">
         <div className="stat-item">
           <span className="stat-value">RAG</span>
@@ -260,7 +269,6 @@ function App() {
 
       <main className="main">
 
-        {/* URL Input Section */}
         <div className={`url-section ${stage !== 'idle' ? 'compact' : ''}`}>
           <div className="url-card">
             {stage === 'idle' && (
@@ -356,6 +364,18 @@ function App() {
                     ) : '📝 Summarize'}
                   </button>
                   <button
+                    className={`notes-btn ${isGeneratingNotes ? 'loading' : ''}`}
+                    onClick={handleGenerateNotes}
+                    disabled={isGeneratingNotes}
+                  >
+                    {isGeneratingNotes ? (
+                      <span className="btn-loading">
+                        <span className="spinner"></span>
+                        Generating...
+                      </span>
+                    ) : '📚 Generate Notes'}
+                  </button>
+                  <button
                     className={`trim-btn ${isTrimming ? 'loading' : ''}`}
                     onClick={handleTrim}
                     disabled={isTrimming}
@@ -366,9 +386,6 @@ function App() {
                         Trimming...
                       </span>
                     ) : '✂️ Smart Trim'}
-                    {isTrimming && (
-                        <p className="trim-hint">⏳ Analyzing video segments... This takes 2-3 minutes for longer videos.</p>
-                    )}
                   </button>
                 </div>
               </div>
@@ -386,6 +403,22 @@ function App() {
                 </div>
                 <div className="summary-content">
                   {summary}
+                </div>
+              </div>
+            )}
+
+            {/* Notes Display */}
+            {notes && (
+              <div className="notes-card">
+                <div className="notes-header">
+                  <h3 className="notes-title">📚 Study Notes</h3>
+                  <button
+                    className="summary-close"
+                    onClick={() => setNotes('')}
+                  >✕</button>
+                </div>
+                <div className="notes-content">
+                  {notes}
                 </div>
               </div>
             )}
@@ -518,8 +551,10 @@ function App() {
               { icon: '⚡', title: 'Fast Search', desc: 'Cosine similarity search across the full video transcript' },
               { icon: '💬', title: 'Chat Memory', desc: 'Remembers context for natural follow-up conversations' },
               { icon: '🎯', title: 'Source Grounded', desc: 'Every answer is strictly based on video content only' },
-              { icon: '📝', title: 'Smart Notes', desc: 'Generate structured study notes from any video' },
-              { icon: '✂️', title: 'Video Trimmer', desc: 'Skip the fluff — watch only the valuable parts' }
+              { icon: '📝', title: 'Smart Summary', desc: 'Generate structured summaries from any video instantly' },
+              { icon: '📚', title: 'Study Notes', desc: 'Auto-generate detailed notes for exam revision' },
+              { icon: '✂️', title: 'Video Trimmer', desc: 'Skip the fluff — watch only the valuable parts' },
+              { icon: '🎓', title: 'Learn Smarter', desc: 'Save hours of study time with AI-powered insights' }
             ].map((f, i) => (
               <div key={i} className="feature-card">
                 <span className="feature-icon">{f.icon}</span>

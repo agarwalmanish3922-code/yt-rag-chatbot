@@ -36,8 +36,8 @@ An AI-powered full-stack application that lets students paste a YouTube URL and 
 - ✅ Chat memory for follow-up questions
 - ✅ Modern React frontend with animations
 - ✅ Video summarization
-- ✅ Smart Video Trimmer — skip unnecessary parts
-- 🔲 Notes generation
+- 🔧 Smart Video Trimmer — under construction (accuracy improvements pending)
+- ✅ Notes generation
 - 🔲 Timestamp-based answers
 - 🔲 MCQ & Quiz generation
 - 🔲 Interview questions generator
@@ -101,6 +101,7 @@ GEMINI_API_KEY=your_gemini_api_key_here
 | POST | `/api/clear-history` | Reset conversation history |
 | POST | `/api/summarize` | Generate structured video summary |
 | POST | `/api/trim` | Smart trim — identify content segments |
+| POST | `/api/notes` | Generate structured study notes |
 
 ## 📈 Progress
 
@@ -152,19 +153,24 @@ GEMINI_API_KEY=your_gemini_api_key_here
 - Multi-model fallback for quota handling
 - Summary card with close button in UI
 
-### ✅ Phase 8 — Smart Video Trimmer
+### ✅ Phase 8 — Smart Video Trimmer (Under Construction)
 - Built `trimmer.js` — single API call approach for any video length
 - Adaptive sampling — always takes ~150 sample points regardless of video length
-- Validates results — rejects unrealistic outputs (0% or 99% saved)
-- Merges close segments — no tiny fragments under 60 seconds
-- Smart fallback — trims intro/outro if Gemini fails
+- Validates results — rejects unrealistic outputs automatically
 - Returns clickable YouTube timestamp deep links
 - Shows time saved stats (original vs content duration + percentage)
-- Works for videos of any length — tested on 5+ hour videos
+- ⚠️ Trimming accuracy being improved — works best on videos with clear filler segments
 - Tagline: "Skip the fluff. Keep the knowledge."
 
+### ✅ Phase 9 — Notes Generation
+- Added `generateNotes()` function in `chat.js`
+- Built `/api/notes` endpoint
+- Added 📚 Generate Notes button in frontend
+- Structured notes with sections, key terms, and quick revision points
+- Multi-model fallback for quota handling
+- Notes card with close button in UI
+
 ## 🗺️ Upcoming Phases
-- 🔲 Phase 9 — Notes Generation
 - 🔲 Phase 10 — Timestamp-based Answers
 - 🔲 Phase 11 — MCQ Generation
 - 🔲 Phase 12 — Interview Questions Generator

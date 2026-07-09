@@ -107,4 +107,70 @@ ${transcript.slice(0, 8000)}`;
   throw new Error('All models quota exceeded. Please wait a few minutes.');
 }
 
-module.exports = { generateAnswer, summarizeVideo };
+async function generateNotes(transcript) {
+  const prompt = `You are an expert note-taker for students. Create detailed, well-structured study notes from this YouTube video transcript.
+
+Format the notes exactly like this:
+
+📚 TOPIC: [Main topic of the video]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📖 SECTION 1: [First major topic]
+- [Key point 1]
+- [Key point 2]
+- [Key point 3]
+💡 Important: [Any crucial insight from this section]
+
+📖 SECTION 2: [Second major topic]
+- [Key point 1]
+- [Key point 2]
+- [Key point 3]
+💡 Important: [Any crucial insight from this section]
+
+[Continue for all major sections...]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔑 KEY TERMS & DEFINITIONS:
+- [Term 1]: [Definition]
+- [Term 2]: [Definition]
+- [Term 3]: [Definition]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚡ QUICK REVISION POINTS:
+- [Most important thing to remember 1]
+- [Most important thing to remember 2]
+- [Most important thing to remember 3]
+- [Most important thing to remember 4]
+- [Most important thing to remember 5]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Make the notes comprehensive, detailed and useful for exam revision.
+Cover ALL major topics discussed in the video.
+Use simple, clear language.
+
+TRANSCRIPT:
+${transcript.slice(0, 10000)}`;
+
+  for (const model of models) {
+    try {
+      const response = await ai.models.generateContent({
+        model,
+        contents: prompt
+      });
+      return response.text;
+    } catch (err) {
+      if (err.status === 429 || err.status === 404 || err.status === 503) {
+        console.log(`Model ${model} failed (${err.status}), trying next...`);
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw new Error('All models quota exceeded. Please wait a few minutes.');
+}
+
+module.exports = { generateAnswer, summarizeVideo, generateNotes };

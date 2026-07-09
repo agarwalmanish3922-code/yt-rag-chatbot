@@ -10,7 +10,7 @@ const { saveChunks, similaritySearch } = require('./vectorStore');
 const { getHistory, addToHistory, clearHistory } = require('./memoryStore');
 const { GoogleGenAI } = require('@google/genai');
 const { trimVideo } = require('./trimmer');
-const { generateAnswer, summarizeVideo } = require('./chat');
+const { generateAnswer, summarizeVideo, generateNotes } = require('./chat');
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -194,6 +194,23 @@ app.post('/api/summarize', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to summarize video' });
+  }
+});
+
+app.post('/api/notes', async (req, res) => {
+  const { videoId, transcript } = req.body;
+
+  if (!videoId || !transcript) {
+    return res.status(400).json({ error: 'videoId and transcript are required' });
+  }
+
+  try {
+    console.log(`Generating notes for video: ${videoId}`);
+    const notes = await generateNotes(transcript);
+    res.json({ videoId, notes });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to generate notes' });
   }
 });
 

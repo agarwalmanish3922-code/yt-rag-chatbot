@@ -10,7 +10,8 @@ const { saveChunks, similaritySearch } = require('./vectorStore');
 const { getHistory, addToHistory, clearHistory } = require('./memoryStore');
 const { GoogleGenAI } = require('@google/genai');
 const { trimVideo } = require('./trimmer');
-const { generateAnswer, summarizeVideo, generateNotes } = require('./chat');
+const { generateAnswer, summarizeVideo, } = require('./chat');
+const { generateStructuredNotes, generatePDF } = require('./notesGenerator');
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -205,12 +206,19 @@ app.post('/api/notes', async (req, res) => {
   }
 
   try {
-    console.log(`Generating notes for video: ${videoId}`);
-    const notes = await generateNotes(transcript);
-    res.json({ videoId, notes });
+    console.log(`Transcript length: ${transcript.length}`);
+    const structuredNotes = await generateStructuredNotes(transcript);
+    console.log('Structured notes:', JSON.stringify(structuredNotes, null, 2).slice(0, 500));
+    const pdfBuffer = await generatePDF(structuredNotes);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="study-notes-${videoId}.pdf"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.send(pdfBuffer);
+
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to generate notes' });
+    console.error('Notes error:', err.message);
+    res.status(500).json({ error: 'Failed to generate notes: ' + err.message });
   }
 });
 

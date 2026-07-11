@@ -22,6 +22,8 @@ function App() {
   const [isTrimming, setIsTrimming] = useState(false);
   const [notes, setNotes] = useState('');
   const [isGeneratingNotes, setIsGeneratingNotes] = useState(false);
+  const [notesReady, setNotesReady] = useState(false);
+  const [notesBlobUrl, setNotesBlobUrl] = useState('');
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -148,18 +150,35 @@ function App() {
   const handleGenerateNotes = async () => {
     if (!videoId || !transcript || isGeneratingNotes) return;
     setIsGeneratingNotes(true);
-    setNotes('');
+    setNotesReady(false);
+    setNotesBlobUrl('');
+
     try {
-      const res = await axios.post(`${API_BASE}/api/notes`, {
-        videoId,
-        transcript
-      });
-      setNotes(res.data.notes);
+      const res = await axios.post(
+        `${API_BASE}/api/notes`,
+        { videoId, transcript },
+        { responseType: 'blob' }
+      );
+
+      const blob = new Blob([res.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      setNotesBlobUrl(url);
+      setNotesReady(true);
+
     } catch (err) {
-      setNotes('❌ Failed to generate notes. Please try again.');
+      alert('Failed to generate notes. Please try again.');
     } finally {
       setIsGeneratingNotes(false);
     }
+  };
+
+  const handleDownloadNotes = () => {
+  const link = document.createElement('a');
+  link.href = notesBlobUrl;
+  link.download = `study-notes-${videoId}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
   };
 
   const handleClear = async () => {
@@ -178,6 +197,8 @@ function App() {
     setSummary('');
     setTrimResult(null);
     setNotes('');
+    setNotesReady(false);
+    setNotesBlobUrl('');
   };
 
   return (
@@ -388,6 +409,19 @@ function App() {
                     ) : '✂️ Smart Trim'}
                   </button>
                 </div>
+              </div>
+            )}
+
+            {notesReady && (
+              <div className="notes-ready-card">
+                <div className="notes-ready-icon">📚</div>
+                <div className="notes-ready-text">
+                  <h4>Study Notes Ready!</h4>
+                  <p>Your comprehensive PDF notes have been generated</p>
+                </div>
+                <button className="download-notes-btn" onClick={handleDownloadNotes}>
+                  ⬇️ Download PDF
+                </button>
               </div>
             )}
 

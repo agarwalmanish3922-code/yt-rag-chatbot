@@ -15,16 +15,18 @@ An AI-powered full-stack application that lets students paste a YouTube URL and 
 6. Gemini LLM generates an answer strictly based on video content
 7. Chat memory allows natural follow-up questions
 8. Smart trimmer identifies and skips unnecessary parts of the video
-9. Notes generator creates structured study notes from the video
+9. Notes generator creates structured college-style PDF study notes
 
 ## 🛠️ Tech Stack
 | Layer | Technology |
 |---|---|
-| Frontend | React |
+| Frontend | React.js |
 | Backend | Node.js + Express |
-| LLM | Google Gemini API |
+| LLM (Chat/Trim/Summary) | Google Gemini API |
+| LLM (Notes Generation) | Groq API — Llama 3.1 8B Instant |
 | Embeddings | Gemini Embedding Model |
 | Vector Search | In-memory Cosine Similarity |
+| PDF Generation | PDFKit |
 | Transcript | youtube-transcript npm package |
 
 ## 📦 Features
@@ -36,34 +38,34 @@ An AI-powered full-stack application that lets students paste a YouTube URL and 
 - ✅ Chat memory for follow-up questions
 - ✅ Modern React frontend with animations
 - ✅ Video summarization
+- ✅ College-style PDF notes generation
 - 🔧 Smart Video Trimmer — under construction (accuracy improvements pending)
-- ✅ Notes generation
-- 🔲 Timestamp-based answers
 - 🔲 MCQ & Quiz generation
 - 🔲 Interview questions generator
-- 🔲 PDF export
 - 🔲 Multi-video support
 - 🔲 User authentication
+- 🔲 3D Neural Interface Frontend
 
 ## 📁 Project Structure
 ```
 yt-rag-chatbot/
 ├── backend/
-│   ├── index.js          # Express server & API routes
-│   ├── chunking.js       # Text chunking logic
-│   ├── embeddings.js     # Gemini embedding generation
-│   ├── vectorStore.js    # In-memory vector storage & cosine similarity
-│   ├── memoryStore.js    # Conversation history management
-│   ├── chat.js           # RAG prompt & Gemini answer generation
-│   ├── trimmer.js        # Smart Video Trimmer logic
-│   └── .env              # Environment variables (not committed)
+│   ├── index.js            # Express server & API routes
+│   ├── chunking.js         # Text chunking logic
+│   ├── embeddings.js       # Gemini embedding generation
+│   ├── vectorStore.js      # In-memory vector storage & cosine similarity
+│   ├── memoryStore.js      # Conversation history management
+│   ├── chat.js             # RAG prompt & Gemini answer generation
+│   ├── trimmer.js          # Smart Video Trimmer logic
+│   ├── notesGenerator.js   # PDF notes generation (Groq + Gemini hybrid)
+│   └── .env                # Environment variables (not committed)
 ├── frontend/
 │   ├── src/
-│   │   ├── App.js        # Main React component
-│   │   ├── App.css       # Animations and styling
-│   │   └── index.js      # React entry point
+│   │   ├── App.js          # Main React component
+│   │   ├── App.css         # Animations and styling
+│   │   └── index.js        # React entry point
 │   └── public/
-├── assets/               # Screenshots and demo GIF
+├── assets/                 # Screenshots and demo GIF
 └── README.md
 ```
 
@@ -88,6 +90,7 @@ Create a `.env` file in `backend/`:
 ```
 PORT=5000
 GEMINI_API_KEY=your_gemini_api_key_here
+GROQ_API_KEY=your_groq_api_key_here
 ```
 
 ## 🔌 API Endpoints
@@ -101,7 +104,7 @@ GEMINI_API_KEY=your_gemini_api_key_here
 | POST | `/api/clear-history` | Reset conversation history |
 | POST | `/api/summarize` | Generate structured video summary |
 | POST | `/api/trim` | Smart trim — identify content segments |
-| POST | `/api/notes` | Generate structured study notes |
+| POST | `/api/notes` | Generate college-style PDF study notes |
 
 ## 📈 Progress
 
@@ -109,7 +112,7 @@ GEMINI_API_KEY=your_gemini_api_key_here
 - Built `/api/extract` POST endpoint
 - Extracts video ID from any YouTube URL format
 - Fetches and cleans transcript using `youtube-transcript`
-- Also returns raw transcript with timestamps for Smart Trimmer
+- Returns raw transcript with timestamps for Smart Trimmer
 
 ### ✅ Phase 2 — Chunking & Embeddings
 - Built `chunking.js` — 1000-char chunks with 100-char overlap
@@ -124,7 +127,7 @@ GEMINI_API_KEY=your_gemini_api_key_here
 ### ✅ Phase 4 — RAG Answer Generation
 - Built `chat.js` — structured RAG prompt with Gemini
 - Built `/api/chat` — full pipeline: embed → search → answer
-- Multi-model fallback system — tries multiple Gemini models if quota exceeded
+- Multi-model fallback system across 6 Gemini models
 
 ### ✅ Phase 5 — Chat Memory
 - Built `memoryStore.js` — conversation history per video
@@ -148,40 +151,40 @@ GEMINI_API_KEY=your_gemini_api_key_here
 ### ✅ Phase 7 — Video Summarization
 - Added `summarizeVideo()` function in `chat.js`
 - Built `/api/summarize` endpoint
-- Added 📝 Summarize button in frontend
+- Added Summarize button in frontend
 - Structured summary with Main Topic, Key Points, Takeaways, Important Terms
 - Multi-model fallback for quota handling
-- Summary card with close button in UI
 
 ### ✅ Phase 8 — Smart Video Trimmer (Under Construction)
-- Built `trimmer.js` — single API call approach for any video length
-- Adaptive sampling — always takes ~150 sample points regardless of video length
+- Built `trimmer.js` — single API call with adaptive sampling
 - Validates results — rejects unrealistic outputs automatically
 - Returns clickable YouTube timestamp deep links
-- Shows time saved stats (original vs content duration + percentage)
-- ⚠️ Trimming accuracy being improved — works best on videos with clear filler segments
+- Shows time saved stats with percentage
+- ⚠️ Accuracy improvements in progress
 - Tagline: "Skip the fluff. Keep the knowledge."
 
-### ✅ Phase 9 — Notes Generation
-- Added `generateNotes()` function in `chat.js`
-- Built `/api/notes` endpoint
-- Added 📚 Generate Notes button in frontend
-- Structured notes with sections, key terms, and quick revision points
-- Multi-model fallback for quota handling
-- Notes card with close button in UI
+### ✅ Phase 9+14 — Smart PDF Notes Generation
+- Built `notesGenerator.js` — hybrid: Groq for short videos, Gemini for long videos
+- Groq (llama-3.1-8b-instant) — ultra fast, generous free tier
+- Gemini — handles long videos with smart transcript sampling
+- College-style PDF: dark section headers, bullet points, key formulas, examples
+- Includes: chapter title, sections, key terms, quick revision, practice questions
+- Download button — PDF ready on demand, no auto-download
+- Built `/api/notes` endpoint returning PDF binary
 
 ## 🗺️ Upcoming Phases
-- 🔲 Phase 10 — Timestamp-based Answers
-- 🔲 Phase 11 — MCQ Generation
-- 🔲 Phase 12 — Interview Questions Generator
-- 🔲 Phase 13 — Quiz Me Mode
-- 🔲 Phase 14 — PDF Export
-- 🔲 Phase 15 — Multi-video Support
-- 🔲 Phase 16 — 3D Neural Interface Frontend Redesign
-- 🔲 Phase 17 — User Authentication
-- 🔲 Phase 18 — Conversation History
-- 🔲 Phase 19 — Deployment
-- 🔲 Phase 20 — Final Polish & Demo
+- 🔲 Phase 10 — MCQ Generation
+- 🔲 Phase 11 — Interview Questions Generator
+- 🔲 Phase 12 — Quiz Me Mode
+- 🔲 Phase 13 — Multi-video Support
+- 🔲 Phase 14 — Smart Trim Accuracy Improvements
+- 🔲 Phase 15 — 3D Neural Interface Frontend Redesign
+- 🔲 Phase 16 — User Authentication
+- 🔲 Phase 17 — Conversation History
+- 🔲 Phase 18 — Deployment
+- 🔲 Phase 19 — Final Polish & Live Demo
 
 ## 🤝 Author
-**Manish Agarwal**
+**Manish Agarwal**  
+B.Tech CSE — Uttaranchal University, Dehradun  
+[GitHub](https://github.com/agarwalmanish3922-code)

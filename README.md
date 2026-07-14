@@ -40,8 +40,8 @@ An AI-powered full-stack application that lets students paste a YouTube URL and 
 - ✅ Video summarization
 - ✅ College-style PDF notes generation
 - 🔧 Smart Video Trimmer — under construction (accuracy improvements pending)
-- 🔲 MCQ & Quiz generation
-- 🔲 Interview questions generator
+- ✅ MCQ & Quiz generation
+- ✅ Interview questions generator
 - 🔲 Multi-video support
 - 🔲 User authentication
 - 🔲 3D Neural Interface Frontend
@@ -172,9 +172,25 @@ GROQ_API_KEY=your_groq_api_key_here
 - Download button — PDF ready on demand, no auto-download
 - Built `/api/notes` endpoint returning PDF binary
 
+### ✅ Phase 10 — MCQ Generation
+- Built `mcqGenerator.js` — generates MCQs using Groq (llama-3.1-8b-instant)
+- Built `/api/mcq` endpoint
+- Interactive quiz UI with 4 options per question
+- Color-coded results — green for correct, red for wrong
+- Score display with percentage
+- Explanation shown after submission
+- Retake quiz option
+- Added ❓ Generate MCQs button in frontend
+
+### ✅ Phase 11 — Interview Questions Generator
+- Built `interviewGenerator.js` — generates interview  Qs using Groq
+- Built `/api/interview` endpoint
+- Questions organized by difficulty: Basic, Intermediate, Advanced
+- Each question includes an answering tip
+- Added 💼 Interview Prep button in frontend
+- Fixed result card layout — proper spacing between Summary, Notes, MCQ, Interview, Trim cards
+
 ## 🗺️ Upcoming Phases
-- 🔲 Phase 10 — MCQ Generation
-- 🔲 Phase 11 — Interview Questions Generator
 - 🔲 Phase 12 — Quiz Me Mode
 - 🔲 Phase 13 — Multi-video Support
 - 🔲 Phase 14 — Smart Trim Accuracy Improvements

@@ -16,19 +16,41 @@ function App() {
   const [stage, setStage] = useState('idle');
   const [transcript, setTranscript] = useState('');
   const [rawTranscript, setRawTranscript] = useState([]);
+
   const [summary, setSummary] = useState('');
   const [isSummarizing, setIsSummarizing] = useState(false);
+
   const [trimResult, setTrimResult] = useState(null);
   const [isTrimming, setIsTrimming] = useState(false);
-  const [notes, setNotes] = useState('');
-  const [isGeneratingNotes, setIsGeneratingNotes] = useState(false);
+
   const [notesReady, setNotesReady] = useState(false);
   const [notesBlobUrl, setNotesBlobUrl] = useState('');
+  const [isGeneratingNotes, setIsGeneratingNotes] = useState(false);
+
+  const [mcqs, setMcqs] = useState(null);
+  const [isGeneratingMcqs, setIsGeneratingMcqs] = useState(false);
+  const [userAnswers, setUserAnswers] = useState({});
+  const [showResults, setShowResults] = useState(false);
+
+  const [interviewQs, setInterviewQs] = useState(null);
+  const [isGeneratingInterview, setIsGeneratingInterview] = useState(false);
+
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  const resetAllTools = () => {
+    setSummary('');
+    setTrimResult(null);
+    setNotesReady(false);
+    setNotesBlobUrl('');
+    setMcqs(null);
+    setUserAnswers({});
+    setShowResults(false);
+    setInterviewQs(null);
+  };
 
   const handleAnalyze = async () => {
     if (!url.trim()) return;
@@ -36,9 +58,7 @@ function App() {
     setIsProcessing(true);
     setStage('extracting');
     setMessages([]);
-    setSummary('');
-    setTrimResult(null);
-    setNotes('');
+    resetAllTools();
 
     try {
       const extractRes = await axios.post(`${API_BASE}/api/extract`, { url });
@@ -159,12 +179,10 @@ function App() {
         { videoId, transcript },
         { responseType: 'blob' }
       );
-
       const blob = new Blob([res.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      setNotesBlobUrl(url);
+      const blobUrl = window.URL.createObjectURL(blob);
+      setNotesBlobUrl(blobUrl);
       setNotesReady(true);
-
     } catch (err) {
       alert('Failed to generate notes. Please try again.');
     } finally {
@@ -173,12 +191,68 @@ function App() {
   };
 
   const handleDownloadNotes = () => {
-  const link = document.createElement('a');
-  link.href = notesBlobUrl;
-  link.download = `study-notes-${videoId}.pdf`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+    const link = document.createElement('a');
+    link.href = notesBlobUrl;
+    link.download = `study-notes-${videoId}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleGenerateMcqs = async () => {
+    if (!videoId || !transcript || isGeneratingMcqs) return;
+    setIsGeneratingMcqs(true);
+    setMcqs(null);
+    setUserAnswers({});
+    setShowResults(false);
+
+    try {
+      const res = await axios.post(`${API_BASE}/api/mcq`, {
+        videoId,
+        transcript
+      });
+      setMcqs(res.data);
+    } catch (err) {
+      alert('Failed to generate MCQs. Please try again.');
+    } finally {
+      setIsGeneratingMcqs(false);
+    }
+  };
+
+  const handleAnswerSelect = (questionIndex, option) => {
+    if (showResults) return;
+    setUserAnswers(prev => ({ ...prev, [questionIndex]: option }));
+  };
+
+  const handleSubmitQuiz = () => {
+    if (Object.keys(userAnswers).length < mcqs.mcqs.length) {
+      alert('Please answer all questions before submitting!');
+      return;
+    }
+    setShowResults(true);
+  };
+
+  const handleRetakeQuiz = () => {
+    setUserAnswers({});
+    setShowResults(false);
+  };
+
+  const handleGenerateInterview = async () => {
+    if (!videoId || !transcript || isGeneratingInterview) return;
+    setIsGeneratingInterview(true);
+    setInterviewQs(null);
+
+    try {
+      const res = await axios.post(`${API_BASE}/api/interview`, {
+        videoId,
+        transcript
+      });
+      setInterviewQs(res.data);
+    } catch (err) {
+      alert('Failed to generate interview questions. Please try again.');
+    } finally {
+      setIsGeneratingInterview(false);
+    }
   };
 
   const handleClear = async () => {
@@ -194,11 +268,7 @@ function App() {
     setStage('idle');
     setTranscript('');
     setRawTranscript([]);
-    setSummary('');
-    setTrimResult(null);
-    setNotes('');
-    setNotesReady(false);
-    setNotesBlobUrl('');
+    resetAllTools();
   };
 
   return (
@@ -290,6 +360,7 @@ function App() {
 
       <main className="main">
 
+        {/* URL INPUT CARD */}
         <div className={`url-section ${stage !== 'idle' ? 'compact' : ''}`}>
           <div className="url-card">
             {stage === 'idle' && (
@@ -371,6 +442,9 @@ function App() {
                   <span className="badge-dot"></span>
                   Video ready — {videoTitle}
                 </div>
+                <p className="video-length-hint">
+                  💡 Best results with Notes & MCQs on videos under 30 minutes
+                </p>
                 <div className="action-buttons">
                   <button
                     className={`summarize-btn ${isSummarizing ? 'loading' : ''}`}
@@ -378,142 +452,276 @@ function App() {
                     disabled={isSummarizing}
                   >
                     {isSummarizing ? (
-                      <span className="btn-loading">
-                        <span className="spinner"></span>
-                        Summarizing...
-                      </span>
+                      <span className="btn-loading"><span className="spinner"></span>Summarizing...</span>
                     ) : '📝 Summarize'}
                   </button>
+
                   <button
                     className={`notes-btn ${isGeneratingNotes ? 'loading' : ''}`}
                     onClick={handleGenerateNotes}
                     disabled={isGeneratingNotes}
                   >
                     {isGeneratingNotes ? (
-                      <span className="btn-loading">
-                        <span className="spinner"></span>
-                        Generating...
-                      </span>
+                      <span className="btn-loading"><span className="spinner"></span>Generating...</span>
                     ) : '📚 Generate Notes'}
                   </button>
+
+                  <button
+                    className={`mcq-btn ${isGeneratingMcqs ? 'loading' : ''}`}
+                    onClick={handleGenerateMcqs}
+                    disabled={isGeneratingMcqs}
+                  >
+                    {isGeneratingMcqs ? (
+                      <span className="btn-loading"><span className="spinner"></span>Generating...</span>
+                    ) : '❓ Generate MCQs'}
+                  </button>
+
+                  <button
+                    className={`interview-btn ${isGeneratingInterview ? 'loading' : ''}`}
+                    onClick={handleGenerateInterview}
+                    disabled={isGeneratingInterview}
+                  >
+                    {isGeneratingInterview ? (
+                      <span className="btn-loading"><span className="spinner"></span>Generating...</span>
+                    ) : '💼 Interview Prep'}
+                  </button>
+
                   <button
                     className={`trim-btn ${isTrimming ? 'loading' : ''}`}
                     onClick={handleTrim}
                     disabled={isTrimming}
                   >
                     {isTrimming ? (
-                      <span className="btn-loading">
-                        <span className="spinner"></span>
-                        Trimming...
-                      </span>
+                      <span className="btn-loading"><span className="spinner"></span>Trimming...</span>
                     ) : '✂️ Smart Trim'}
                   </button>
                 </div>
               </div>
             )}
-
-            {notesReady && (
-              <div className="notes-ready-card">
-                <div className="notes-ready-icon">📚</div>
-                <div className="notes-ready-text">
-                  <h4>Study Notes Ready!</h4>
-                  <p>Your comprehensive PDF notes have been generated</p>
-                </div>
-                <button className="download-notes-btn" onClick={handleDownloadNotes}>
-                  ⬇️ Download PDF
-                </button>
-              </div>
-            )}
-
-            {/* Summary Display */}
-            {summary && (
-              <div className="summary-card">
-                <div className="summary-header">
-                  <h3 className="summary-title">📺 Video Summary</h3>
-                  <button
-                    className="summary-close"
-                    onClick={() => setSummary('')}
-                  >✕</button>
-                </div>
-                <div className="summary-content">
-                  {summary}
-                </div>
-              </div>
-            )}
-
-            {/* Notes Display */}
-            {notes && (
-              <div className="notes-card">
-                <div className="notes-header">
-                  <h3 className="notes-title">📚 Study Notes</h3>
-                  <button
-                    className="summary-close"
-                    onClick={() => setNotes('')}
-                  >✕</button>
-                </div>
-                <div className="notes-content">
-                  {notes}
-                </div>
-              </div>
-            )}
-
-            {/* Trim Results */}
-            {trimResult && (
-              <div className="trim-card">
-                <div className="trim-header">
-                  <h3 className="trim-title">✂️ Smart Video Trimmer</h3>
-                  <button
-                    className="summary-close"
-                    onClick={() => setTrimResult(null)}
-                  >✕</button>
-                </div>
-
-                <div className="trim-stats">
-                  <div className="trim-stat">
-                    <span className="trim-stat-value">{trimResult.totalDuration}</span>
-                    <span className="trim-stat-label">Original</span>
-                  </div>
-                  <div className="trim-stat highlight">
-                    <span className="trim-stat-value">{trimResult.contentDuration}</span>
-                    <span className="trim-stat-label">Content Only</span>
-                  </div>
-                  <div className="trim-stat saved">
-                    <span className="trim-stat-value">{trimResult.timeSaved}</span>
-                    <span className="trim-stat-label">Time Saved</span>
-                  </div>
-                  <div className="trim-stat percent">
-                    <span className="trim-stat-value">{trimResult.timeSavedPercent}%</span>
-                    <span className="trim-stat-label">Shorter</span>
-                  </div>
-                </div>
-
-                <p className="trim-subtitle">📌 Watch these segments only:</p>
-
-                <div className="trim-segments">
-                  {trimResult.watchSegments.map((seg, idx) => (
-                      <a
-                      key={idx}
-                      href={seg.youtubeLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="trim-segment"
-                    >
-                      <div className="segment-number">{seg.index}</div>
-                      <div className="segment-info">
-                        <span className="segment-time">▶ {seg.startTime} — {seg.endTime}</span>
-                        <span className="segment-duration">{seg.duration}</span>
-                      </div>
-                      <div className="segment-arrow">→</div>
-                    </a>
-                  ))}
-                </div>
-
-                <p className="trim-tagline">⚡ Skip the fluff. Keep the knowledge.</p>
-              </div>
-            )}
-
           </div>
         </div>
+
+        {/* ═══════ RESULT CARDS — each is its own separate block ═══════ */}
+
+        {/* Summary Card */}
+        {summary && (
+          <div className="result-block">
+            <div className="summary-card">
+              <div className="summary-header">
+                <h3 className="summary-title">📺 Video Summary</h3>
+                <button className="summary-close" onClick={() => setSummary('')}>✕</button>
+              </div>
+              <div className="summary-content">{summary}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Notes Ready Card */}
+        {notesReady && (
+          <div className="result-block">
+            <div className="notes-ready-card">
+              <div className="notes-ready-icon">📚</div>
+              <div className="notes-ready-text">
+                <h4>Study Notes Ready!</h4>
+                <p>Your comprehensive PDF notes have been generated</p>
+              </div>
+              <button className="download-notes-btn" onClick={handleDownloadNotes}>
+                ⬇️ Download PDF
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* MCQ Card */}
+        {mcqs && (
+          <div className="result-block">
+            <div className="mcq-card">
+              <div className="mcq-header">
+                <div>
+                  <h3 className="mcq-title">❓ MCQ Quiz</h3>
+                  <p className="mcq-topic">{mcqs.topic}</p>
+                </div>
+                <button className="summary-close" onClick={() => {
+                  setMcqs(null);
+                  setUserAnswers({});
+                  setShowResults(false);
+                }}>✕</button>
+              </div>
+
+              {showResults && (
+                <div className="score-banner">
+                  <span className="score-value">
+                    {mcqs.mcqs.filter((q, i) => userAnswers[i] === q.correct).length}
+                    /{mcqs.mcqs.length}
+                  </span>
+                  <span className="score-label">
+                    {Math.round(mcqs.mcqs.filter((q, i) =>
+                      userAnswers[i] === q.correct).length / mcqs.mcqs.length * 100)}% Score
+                  </span>
+                  <button className="retake-btn" onClick={handleRetakeQuiz}>
+                    🔄 Retake Quiz
+                  </button>
+                </div>
+              )}
+
+              <div className="mcq-questions">
+                {mcqs.mcqs.map((q, idx) => {
+                  const userAnswer = userAnswers[idx];
+                  const isCorrect = userAnswer === q.correct;
+
+                  return (
+                    <div key={idx} className={`mcq-question ${showResults ? (isCorrect ? 'correct' : 'wrong') : ''}`}>
+                      <p className="question-text">
+                        <span className="question-num">Q{idx + 1}.</span> {q.question}
+                      </p>
+
+                      <div className="options">
+                        {Object.entries(q.options).map(([key, value]) => {
+                          let optionClass = 'option';
+                          if (showResults) {
+                            if (key === q.correct) optionClass += ' option-correct';
+                            else if (key === userAnswer) optionClass += ' option-wrong';
+                          } else if (userAnswer === key) {
+                            optionClass += ' option-selected';
+                          }
+
+                          return (
+                            <button
+                              key={key}
+                              className={optionClass}
+                              onClick={() => handleAnswerSelect(idx, key)}
+                            >
+                              <span className="option-key">{key}</span>
+                              <span className="option-value">{value}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {showResults && (
+                        <div className={`explanation ${isCorrect ? 'exp-correct' : 'exp-wrong'}`}>
+                          <span>{isCorrect ? '✅' : '❌'}</span>
+                          <span>{q.explanation}</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {!showResults && (
+                <button className="submit-quiz-btn" onClick={handleSubmitQuiz}>
+                  Submit Quiz
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Interview Questions Card */}
+        {interviewQs && (
+          <div className="result-block">
+            <div className="interview-card">
+              <div className="interview-header">
+                <div>
+                  <h3 className="interview-title">💼 Interview Questions</h3>
+                  <p className="interview-topic">{interviewQs.topic}</p>
+                </div>
+                <button className="summary-close" onClick={() => setInterviewQs(null)}>✕</button>
+              </div>
+
+              {interviewQs.basic && interviewQs.basic.length > 0 && (
+                <div className="interview-level">
+                  <h4 className="level-label basic-label">📗 BASIC LEVEL</h4>
+                  {interviewQs.basic.map((item, idx) => (
+                    <div key={idx} className="interview-question">
+                      <p className="iq-question">Q{idx + 1}. {item.question}</p>
+                      <p className="iq-tip">💡 Tip: {item.tip}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {interviewQs.intermediate && interviewQs.intermediate.length > 0 && (
+                <div className="interview-level">
+                  <h4 className="level-label intermediate-label">📘 INTERMEDIATE LEVEL</h4>
+                  {interviewQs.intermediate.map((item, idx) => (
+                    <div key={idx} className="interview-question">
+                      <p className="iq-question">Q{idx + 1}. {item.question}</p>
+                      <p className="iq-tip">💡 Tip: {item.tip}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {interviewQs.advanced && interviewQs.advanced.length > 0 && (
+                <div className="interview-level">
+                  <h4 className="level-label advanced-label">📕 ADVANCED LEVEL</h4>
+                  {interviewQs.advanced.map((item, idx) => (
+                    <div key={idx} className="interview-question">
+                      <p className="iq-question">Q{idx + 1}. {item.question}</p>
+                      <p className="iq-tip">💡 Tip: {item.tip}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Trim Results Card */}
+        {trimResult && (
+          <div className="result-block">
+            <div className="trim-card">
+              <div className="trim-header">
+                <h3 className="trim-title">✂️ Smart Video Trimmer</h3>
+                <button className="summary-close" onClick={() => setTrimResult(null)}>✕</button>
+              </div>
+
+              <div className="trim-stats">
+                <div className="trim-stat">
+                  <span className="trim-stat-value">{trimResult.totalDuration}</span>
+                  <span className="trim-stat-label">Original</span>
+                </div>
+                <div className="trim-stat highlight">
+                  <span className="trim-stat-value">{trimResult.contentDuration}</span>
+                  <span className="trim-stat-label">Content Only</span>
+                </div>
+                <div className="trim-stat saved">
+                  <span className="trim-stat-value">{trimResult.timeSaved}</span>
+                  <span className="trim-stat-label">Time Saved</span>
+                </div>
+                <div className="trim-stat percent">
+                  <span className="trim-stat-value">{trimResult.timeSavedPercent}%</span>
+                  <span className="trim-stat-label">Shorter</span>
+                </div>
+              </div>
+
+              <p className="trim-subtitle">📌 Watch these segments only:</p>
+
+              <div className="trim-segments">
+                {trimResult.watchSegments.map((seg, idx) => (
+                  <a
+                    key={idx}
+                    href={seg.youtubeLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="trim-segment"
+                  >
+                    <div className="segment-number">{seg.index}</div>
+                    <div className="segment-info">
+                      <span className="segment-time">▶ {seg.startTime} — {seg.endTime}</span>
+                      <span className="segment-duration">{seg.duration}</span>
+                    </div>
+                    <div className="segment-arrow">→</div>
+                  </a>
+                ))}
+              </div>
+
+              <p className="trim-tagline">⚡ Skip the fluff. Keep the knowledge.</p>
+            </div>
+          </div>
+        )}
 
         {/* Chat Section */}
         {messages.length > 0 && (
@@ -542,9 +750,7 @@ function App() {
                     <div className="message-avatar">🤖</div>
                     <div className="message-body">
                       <div className="typing-indicator">
-                        <span></span>
-                        <span></span>
-                        <span></span>
+                        <span></span><span></span><span></span>
                       </div>
                     </div>
                   </div>
@@ -586,7 +792,9 @@ function App() {
               { icon: '💬', title: 'Chat Memory', desc: 'Remembers context for natural follow-up conversations' },
               { icon: '🎯', title: 'Source Grounded', desc: 'Every answer is strictly based on video content only' },
               { icon: '📝', title: 'Smart Summary', desc: 'Generate structured summaries from any video instantly' },
-              { icon: '📚', title: 'Study Notes', desc: 'Auto-generate detailed notes for exam revision' },
+              { icon: '📚', title: 'Study Notes', desc: 'Auto-generate detailed PDF notes for exam revision' },
+              { icon: '❓', title: 'MCQ Quiz', desc: 'Test yourself with auto-generated multiple choice questions' },
+              { icon: '💼', title: 'Interview Prep', desc: 'Get likely interview questions based on video content' },
               { icon: '✂️', title: 'Video Trimmer', desc: 'Skip the fluff — watch only the valuable parts' },
               { icon: '🎓', title: 'Learn Smarter', desc: 'Save hours of study time with AI-powered insights' }
             ].map((f, i) => (

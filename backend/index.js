@@ -12,6 +12,8 @@ const { GoogleGenAI } = require('@google/genai');
 const { trimVideo } = require('./trimmer');
 const { generateAnswer, summarizeVideo, } = require('./chat');
 const { generateStructuredNotes, generatePDF } = require('./notesGenerator');
+const { generateMCQs } = require('./mcqGenerator');
+const { generateInterviewQuestions } = require('./interviewGenerator');
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -219,6 +221,40 @@ app.post('/api/notes', async (req, res) => {
   } catch (err) {
     console.error('Notes error:', err.message);
     res.status(500).json({ error: 'Failed to generate notes: ' + err.message });
+  }
+});
+
+app.post('/api/mcq', async (req, res) => {
+  const { videoId, transcript } = req.body;
+
+  if (!videoId || !transcript) {
+    return res.status(400).json({ error: 'videoId and transcript are required' });
+  }
+
+  try {
+    console.log(`Generating MCQs for video: ${videoId}`);
+    const result = await generateMCQs(transcript);
+    res.json({ videoId, ...result });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to generate MCQs: ' + err.message });
+  }
+});
+
+app.post('/api/interview', async (req, res) => {
+  const { videoId, transcript } = req.body;
+
+  if (!videoId || !transcript) {
+    return res.status(400).json({ error: 'videoId and transcript are required' });
+  }
+
+  try {
+    console.log(`Generating interview questions for video: ${videoId}`);
+    const result = await generateInterviewQuestions(transcript);
+    res.json({ videoId, ...result });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to generate interview questions: ' + err.message });
   }
 });
 

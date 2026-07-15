@@ -48,5 +48,8 @@ function similaritySearch(videoId, questionEmbedding, topK = 3) {
 
   return scored.slice(0, topK);
 }
+function isProcessed(videoId) {
+  return !!store[videoId];
+}
 
-module.exports = { saveChunks, getChunks, similaritySearch };
+module.exports = { saveChunks, getChunks, similaritySearch, isProcessed };

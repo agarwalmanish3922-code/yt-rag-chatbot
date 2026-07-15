@@ -6,7 +6,7 @@ const cors = require('cors');
 const { YoutubeTranscript } = require('youtube-transcript');
 const { chunkText } = require('./chunking');
 const { getEmbedding } = require('./embeddings');
-const { saveChunks, similaritySearch } = require('./vectorStore');
+const { saveChunks, similaritySearch, isProcessed } = require('./vectorStore');
 const { getHistory, addToHistory, clearHistory } = require('./memoryStore');
 const { GoogleGenAI } = require('@google/genai');
 const { trimVideo } = require('./trimmer');
@@ -67,28 +67,33 @@ app.post('/api/extract', async (req, res) => {
   }
 });
 
+
 app.post('/api/process', async (req, res) => {
   const { transcript, videoId } = req.body;
 
   if (!transcript) return res.status(400).json({ error: 'Transcript is required' });
 
+  // Skip re-processing if already done
+  if (isProcessed(videoId)) {
+    console.log(`Video ${videoId} already processed, skipping...`);
+    return res.json({
+      videoId,
+      totalChunks: 0,
+      message: 'Video already processed',
+      cached: true
+    });
+  }
+
   try {
     const chunks = chunkText(transcript);
-
     const embeddedChunks = [];
 
     for (let i = 0; i < chunks.length; i++) {
       const embedding = await getEmbedding(chunks[i]);
-      embeddedChunks.push({
-        id: i,
-        text: chunks[i],
-        embedding
-      });
-      // Small delay to avoid hitting rate limits
+      embeddedChunks.push({ id: i, text: chunks[i], embedding });
       await new Promise(resolve => setTimeout(resolve, 200));
     }
 
-    // NEW LINE — save to memory after embedding
     saveChunks(videoId, embeddedChunks);
     res.json({
       videoId,

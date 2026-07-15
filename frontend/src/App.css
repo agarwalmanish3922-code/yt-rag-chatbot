@@ -1806,3 +1806,75 @@ body {
 .result-block:last-child {
   margin-bottom: 32px;
 }
+
+/* Video History Bar */
+.video-history-bar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 24px;
+  background: rgba(255,255,255,0.02);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  overflow-x: auto;
+}
+
+.history-label {
+  font-size: 11px;
+  color: #666;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.history-chips {
+  display: flex;
+  gap: 8px;
+}
+
+.history-chip {
+  background: rgba(108,99,255,0.08);
+  border: 1px solid rgba(108,99,255,0.15);
+  color: #8b83ff;
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.history-chip:hover:not(:disabled) {
+  background: rgba(108,99,255,0.15);
+}
+
+.history-chip.active {
+  background: rgba(108,99,255,0.25);
+  border-color: rgba(108,99,255,0.5);
+  color: #fff;
+}
+
+.history-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Result blocks */
+.result-block {
+  margin-bottom: 20px;
+}
+
+.result-block:last-child {
+  margin-bottom: 32px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.action-buttons button {
+  flex: 1 1 auto;
+  min-width: 140px;
+}

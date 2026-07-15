@@ -35,11 +35,20 @@ function App() {
   const [interviewQs, setInterviewQs] = useState(null);
   const [isGeneratingInterview, setIsGeneratingInterview] = useState(false);
 
+  const [videoHistory, setVideoHistory] = useState(() => {
+    const saved = localStorage.getItem('videoHistory');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  useEffect(() => {
+    localStorage.setItem('videoHistory', JSON.stringify(videoHistory));
+  }, [videoHistory]);
 
   const resetAllTools = () => {
     setSummary('');
@@ -63,8 +72,10 @@ function App() {
     try {
       const extractRes = await axios.post(`${API_BASE}/api/extract`, { url });
       const { videoId: vid, transcript, rawTranscript } = extractRes.data;
+      const title = `Video: ${vid}`;
+
       setVideoId(vid);
-      setVideoTitle(`Video: ${vid}`);
+      setVideoTitle(title);
       setTranscript(transcript);
       setRawTranscript(rawTranscript);
       setStage('processing');
@@ -81,8 +92,50 @@ function App() {
         timestamp: new Date()
       }]);
 
+      // Add to video history (max 5, no duplicates)
+      setVideoHistory(prev => {
+        const exists = prev.find(v => v.videoId === vid);
+        if (exists) return prev;
+        return [{ videoId: vid, title, url, transcript, rawTranscript }, ...prev].slice(0, 5);
+      });
+
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong. Please try again.');
+      setStage('idle');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleSwitchVideo = async (historyItem) => {
+    if (historyItem.videoId === videoId) return; // already active
+
+    setError('');
+    resetAllTools();
+    setMessages([]);
+    setUrl(historyItem.url);
+    setVideoId(historyItem.videoId);
+    setVideoTitle(historyItem.title);
+    setTranscript(historyItem.transcript);
+    setRawTranscript(historyItem.rawTranscript);
+    setStage('processing');
+    setIsProcessing(true);
+
+    try {
+      // Re-process to ensure embeddings exist in backend memory
+      await axios.post(`${API_BASE}/api/process`, {
+        videoId: historyItem.videoId,
+        transcript: historyItem.transcript
+      });
+
+      setStage('ready');
+      setMessages([{
+        role: 'assistant',
+        content: `✅ Switched to ${historyItem.title}. Ask me anything about this video!`,
+        timestamp: new Date()
+      }]);
+    } catch (err) {
+      setError('Failed to switch video. Please try again.');
       setStage('idle');
     } finally {
       setIsProcessing(false);
@@ -336,6 +389,25 @@ function App() {
         </div>
       </header>
 
+      {/* Video History Bar */}
+      {videoHistory.length > 0 && (
+        <div className="video-history-bar">
+          <span className="history-label">📼 Recent:</span>
+          <div className="history-chips">
+            {videoHistory.map((v, idx) => (
+              <button
+                key={idx}
+                className={`history-chip ${v.videoId === videoId ? 'active' : ''}`}
+                onClick={() => handleSwitchVideo(v)}
+                disabled={isProcessing}
+              >
+                {v.title.replace('Video: ', '')}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="stats-bar">
         <div className="stat-item">
           <span className="stat-value">RAG</span>
@@ -501,9 +573,8 @@ function App() {
           </div>
         </div>
 
-        {/* ═══════ RESULT CARDS — each is its own separate block ═══════ */}
+        {/* ═══════ RESULT CARDS ═══════ */}
 
-        {/* Summary Card */}
         {summary && (
           <div className="result-block">
             <div className="summary-card">
@@ -516,7 +587,6 @@ function App() {
           </div>
         )}
 
-        {/* Notes Ready Card */}
         {notesReady && (
           <div className="result-block">
             <div className="notes-ready-card">
@@ -532,7 +602,6 @@ function App() {
           </div>
         )}
 
-        {/* MCQ Card */}
         {mcqs && (
           <div className="result-block">
             <div className="mcq-card">
@@ -618,7 +687,6 @@ function App() {
           </div>
         )}
 
-        {/* Interview Questions Card */}
         {interviewQs && (
           <div className="result-block">
             <div className="interview-card">
@@ -669,7 +737,6 @@ function App() {
           </div>
         )}
 
-        {/* Trim Results Card */}
         {trimResult && (
           <div className="result-block">
             <div className="trim-card">
@@ -796,7 +863,7 @@ function App() {
               { icon: '❓', title: 'MCQ Quiz', desc: 'Test yourself with auto-generated multiple choice questions' },
               { icon: '💼', title: 'Interview Prep', desc: 'Get likely interview questions based on video content' },
               { icon: '✂️', title: 'Video Trimmer', desc: 'Skip the fluff — watch only the valuable parts' },
-              { icon: '🎓', title: 'Learn Smarter', desc: 'Save hours of study time with AI-powered insights' }
+              { icon: '📼', title: 'Multi-Video', desc: 'Switch between multiple videos without losing progress' }
             ].map((f, i) => (
               <div key={i} className="feature-card">
                 <span className="feature-icon">{f.icon}</span>

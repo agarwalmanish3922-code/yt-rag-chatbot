@@ -1,3 +1,5 @@
+import { useAuth } from './AuthContext';
+import Auth from './Auth';
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
@@ -5,6 +7,7 @@ import './App.css';
 const API_BASE = 'http://localhost:5000';
 
 function App() {
+  const { token, user, loading, logout } = useAuth();
   const [url, setUrl] = useState('');
   const [videoId, setVideoId] = useState(null);
   const [videoTitle, setVideoTitle] = useState('');
@@ -35,10 +38,17 @@ function App() {
   const [interviewQs, setInterviewQs] = useState(null);
   const [isGeneratingInterview, setIsGeneratingInterview] = useState(false);
 
-  const [videoHistory, setVideoHistory] = useState(() => {
-    const saved = localStorage.getItem('videoHistory');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [videoHistory, setVideoHistory] = useState([]);
+
+  useEffect(() => {
+    if (token) {
+      axios.get(`${API_BASE}/api/history/list`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      .then(res => setVideoHistory(res.data.history))
+      .catch(() => setVideoHistory([]));
+    }
+  }, [token]);
 
   const messagesEndRef = useRef(null);
 
@@ -46,9 +56,14 @@ function App() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  useEffect(() => {
-    localStorage.setItem('videoHistory', JSON.stringify(videoHistory));
-  }, [videoHistory]);
+  
+  if (loading) {
+    return <div className="auth-loading">Loading...</div>;
+  }
+
+  if (!user) {
+    return <Auth />;
+  }
 
   const resetAllTools = () => {
     setSummary('');
@@ -83,7 +98,9 @@ function App() {
       await axios.post(`${API_BASE}/api/process`, {
         videoId: vid,
         transcript
-      });
+      }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
 
       setStage('ready');
       setMessages([{
@@ -92,12 +109,20 @@ function App() {
         timestamp: new Date()
       }]);
 
-      // Add to video history (max 5, no duplicates)
-      setVideoHistory(prev => {
-        const exists = prev.find(v => v.videoId === vid);
-        if (exists) return prev;
-        return [{ videoId: vid, title, url, transcript, rawTranscript }, ...prev].slice(0, 5);
-      });
+      // Save to MongoDB history (per logged-in user)
+      try {
+        await axios.post(`${API_BASE}/api/history/save`,
+          { videoId: vid, title, url, transcript },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        const historyRes = await axios.get(`${API_BASE}/api/history/list`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setVideoHistory(historyRes.data.history);
+      } catch (err) {
+        console.log('History save failed, continuing anyway');
+      }
 
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong. Please try again.');
@@ -310,7 +335,10 @@ function App() {
 
   const handleClear = async () => {
     if (videoId) {
-      await axios.post(`${API_BASE}/api/clear-history`, { videoId });
+      await axios.post(`${API_BASE}/api/clear-history`, 
+        { videoId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
     }
     setUrl('');
     setVideoId(null);
@@ -382,10 +410,14 @@ function App() {
           </div>
           {videoId && (
             <button className="clear-btn" onClick={handleClear}
-              style={{position: 'absolute', right: '24px'}}>
+              style={{position: 'absolute', right: '100px'}}>
               🔄 New Chat
             </button>
           )}
+          <button className="logout-btn" onClick={logout}
+            style={{position: 'absolute', right: '24px'}}>
+            Logout
+          </button>
         </div>
       </header>
 

@@ -1,18 +1,20 @@
-// This is our in-memory database
-// It's just a JavaScript object that holds chunks per videoId
 const store = {};
 
-// Save all chunks for a video
-function saveChunks(videoId, chunks) {
-  store[videoId] = chunks;
+function saveChunks(userId, videoId, chunks) {
+  const key = `${userId}_${videoId}`;
+  store[key] = chunks;
 }
 
-// Get all chunks for a video
-function getChunks(videoId) {
-  return store[videoId] || [];
+function getChunks(userId, videoId) {
+  const key = `${userId}_${videoId}`;
+  return store[key] || [];
 }
 
-// Calculate cosine similarity between two vectors
+function isProcessed(userId, videoId) {
+  const key = `${userId}_${videoId}`;
+  return !!store[key];
+}
+
 function cosineSimilarity(vecA, vecB) {
   let dotProduct = 0;
   let magnitudeA = 0;
@@ -28,14 +30,11 @@ function cosineSimilarity(vecA, vecB) {
   magnitudeB = Math.sqrt(magnitudeB);
 
   if (magnitudeA === 0 || magnitudeB === 0) return 0;
-
   return dotProduct / (magnitudeA * magnitudeB);
 }
 
-// Find top K most similar chunks to a question embedding
-function similaritySearch(videoId, questionEmbedding, topK = 3) {
-  const chunks = getChunks(videoId);
-
+function similaritySearch(userId, videoId, questionEmbedding, topK = 3) {
+  const chunks = getChunks(userId, videoId);
   if (chunks.length === 0) return [];
 
   const scored = chunks.map(chunk => ({
@@ -45,11 +44,7 @@ function similaritySearch(videoId, questionEmbedding, topK = 3) {
   }));
 
   scored.sort((a, b) => b.score - a.score);
-
   return scored.slice(0, topK);
-}
-function isProcessed(videoId) {
-  return !!store[videoId];
 }
 
 module.exports = { saveChunks, getChunks, similaritySearch, isProcessed };

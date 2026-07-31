@@ -1,5 +1,11 @@
+const connectDB = require('./db');
+const authRoutes = require('./routes/auth');
+const authMiddleware = require('./middleware/auth');
+const VideoHistory = require('./models/VideoHistory');
 const dotenv = require('dotenv');
 dotenv.config();
+connectDB();
+
 
 const express = require('express');
 const cors = require('cors');
@@ -15,12 +21,14 @@ const { generateStructuredNotes, generatePDF } = require('./notesGenerator');
 const { generateMCQs } = require('./mcqGenerator');
 const { generateInterviewQuestions } = require('./interviewGenerator');
 
+
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
+app.use('/api/auth', authRoutes);
 
 
 function getVideoId(url) {
@@ -68,14 +76,14 @@ app.post('/api/extract', async (req, res) => {
 });
 
 
-app.post('/api/process', async (req, res) => {
+app.post('/api/process', authMiddleware, async (req, res) => {
   const { transcript, videoId } = req.body;
+  const userId = req.userId;
 
   if (!transcript) return res.status(400).json({ error: 'Transcript is required' });
 
-  // Skip re-processing if already done
-  if (isProcessed(videoId)) {
-    console.log(`Video ${videoId} already processed, skipping...`);
+  if (isProcessed(userId, videoId)) {
+    console.log(`Video ${videoId} already processed for user ${userId}, skipping...`);
     return res.json({
       videoId,
       totalChunks: 0,
@@ -94,7 +102,7 @@ app.post('/api/process', async (req, res) => {
       await new Promise(resolve => setTimeout(resolve, 200));
     }
 
-    saveChunks(videoId, embeddedChunks);
+    saveChunks(userId, videoId, embeddedChunks);
     res.json({
       videoId,
       totalChunks: embeddedChunks.length,
@@ -106,66 +114,50 @@ app.post('/api/process', async (req, res) => {
   }
 });
 
-app.post('/api/search', async (req, res) => {
+app.post('/api/search', authMiddleware, async (req, res) => {
   const { videoId, question } = req.body;
+  const userId = req.userId;
 
   if (!videoId || !question) {
     return res.status(400).json({ error: 'videoId and question are required' });
   }
 
   try {
-    // Convert question to embedding
     const questionEmbedding = await getEmbedding(question);
-
-    // Find top 3 most relevant chunks
-    const results = similaritySearch(videoId, questionEmbedding);
-
-    res.json({
-      question,
-      results
-    });
+    const results = similaritySearch(userId, videoId, questionEmbedding);
+    res.json({ question, results });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Search failed' });
   }
 });
 
-app.post('/api/chat', async (req, res) => {
+app.post('/api/chat', authMiddleware, async (req, res) => {
   const { videoId, question } = req.body;
+  const userId = req.userId;
 
   if (!videoId || !question) {
     return res.status(400).json({ error: 'videoId and question are required' });
   }
 
   try {
-    // Step 1: Convert question to embedding
     const questionEmbedding = await getEmbedding(question);
-
-    // Step 2: Find most relevant chunks
-    const relevantChunks = similaritySearch(videoId, questionEmbedding, 3);
+    const relevantChunks = similaritySearch(userId, videoId, questionEmbedding, 3);
 
     if (relevantChunks.length === 0) {
       return res.status(404).json({ error: 'No content found for this video. Please process it first.' });
     }
 
-    // Step 3: Get conversation history
-    const history = getHistory(videoId);
-
-    // Step 4: Generate answer with context + history
+    const history = getHistory(userId, videoId);
     const answer = await generateAnswer(question, relevantChunks, history);
 
-    // Step 5: Save this Q&A to history
-    addToHistory(videoId, 'user', question);
-    addToHistory(videoId, 'assistant', answer);
+    addToHistory(userId, videoId, 'user', question);
+    addToHistory(userId, videoId, 'assistant', answer);
 
     res.json({
       question,
       answer,
-      sourceChunks: relevantChunks.map(c => ({
-        id: c.id,
-        text: c.text,
-        score: c.score
-      }))
+      sourceChunks: relevantChunks.map(c => ({ id: c.id, text: c.text, score: c.score }))
     });
   } catch (err) {
     console.error(err);
@@ -173,14 +165,15 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-app.post('/api/clear-history', (req, res) => {
+app.post('/api/clear-history', authMiddleware, (req, res) => {
   const { videoId } = req.body;
+  const userId = req.userId;
 
   if (!videoId) {
     return res.status(400).json({ error: 'videoId is required' });
   }
 
-  clearHistory(videoId);
+  clearHistory(userId, videoId);
   res.json({ message: 'Conversation history cleared successfully' });
 });
 
@@ -281,6 +274,43 @@ app.post('/api/trim', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to trim video' });
+  }
+});
+
+// Save video to user's history (protected route)
+app.post('/api/history/save', authMiddleware, async (req, res) => {
+  const { videoId, title, url, transcript } = req.body;
+
+  try {
+    const existing = await VideoHistory.findOne({ userId: req.userId, videoId });
+    if (existing) {
+      return res.json({ message: 'Already in history' });
+    }
+
+    await VideoHistory.create({
+      userId: req.userId,
+      videoId,
+      title,
+      url,
+      transcript
+    });
+
+    res.json({ message: 'Saved to history' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to save history' });
+  }
+});
+
+// Get user's video history (protected route)
+app.get('/api/history/list', authMiddleware, async (req, res) => {
+  try {
+    const history = await VideoHistory.find({ userId: req.userId })
+      .sort({ createdAt: -1 })
+      .limit(10);
+    res.json({ history });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch history' });
   }
 });
 

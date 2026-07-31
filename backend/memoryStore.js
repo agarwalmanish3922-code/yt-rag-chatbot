@@ -1,23 +1,21 @@
-// Stores conversation history per videoId per session
-// Structure: { videoId: [ {role, content}, {role, content}, ... ] }
 const conversationHistory = {};
 
-// Get history for a video
-function getHistory(videoId) {
-  return conversationHistory[videoId] || [];
+function getHistory(userId, videoId) {
+  const key = `${userId}_${videoId}`;
+  return conversationHistory[key] || [];
 }
 
-// Add a new message to history
-function addToHistory(videoId, role, content) {
-  if (!conversationHistory[videoId]) {
-    conversationHistory[videoId] = [];
+function addToHistory(userId, videoId, role, content) {
+  const key = `${userId}_${videoId}`;
+  if (!conversationHistory[key]) {
+    conversationHistory[key] = [];
   }
-  conversationHistory[videoId].push({ role, content });
+  conversationHistory[key].push({ role, content });
 }
 
-// Clear history for a video (when user wants to start fresh)
-function clearHistory(videoId) {
-  conversationHistory[videoId] = [];
+function clearHistory(userId, videoId) {
+  const key = `${userId}_${videoId}`;
+  conversationHistory[key] = [];
 }
 
 module.exports = { getHistory, addToHistory, clearHistory };

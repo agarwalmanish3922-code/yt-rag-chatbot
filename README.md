@@ -1,242 +1,325 @@
+<div align="center">
+
 # 🎬 YouTube Learning Assistant
+
 ### *Learn smarter. Skip the fluff. Keep the knowledge.*
 
-An AI-powered full-stack application that lets students paste a YouTube URL and have an intelligent conversation about the video content, generate smart notes, test themselves with MCQs, prepare for interviews, skip unnecessary parts, and save valuable study time — all powered by RAG (Retrieval-Augmented Generation).
+An AI-powered full-stack platform that turns any YouTube video into an interactive learning experience — chat with videos, generate study notes, test yourself with MCQs, prep for interviews, and skip the unnecessary parts to save hours of study time.
 
-## 🚀 Live Demo
-> Coming soon after deployment
+🔗 **[Live Demo](https://yt-rag-chatbot-alpha.vercel.app/)**  •  📂 **[GitHub Repo](https://github.com/agarwalmanish3922-code/yt-rag-chatbot)**
+
+![Status](https://img.shields.io/badge/status-live-success)
+![React](https://img.shields.io/badge/Frontend-React-61DAFB?logo=react&logoColor=white)
+![Node](https://img.shields.io/badge/Backend-Node.js-339933?logo=node.js&logoColor=white)
+![MongoDB](https://img.shields.io/badge/Database-MongoDB-47A248?logo=mongodb&logoColor=white)
+![Gemini](https://img.shields.io/badge/AI-Google_Gemini-4285F4?logo=google&logoColor=white)
+![Groq](https://img.shields.io/badge/AI-Groq_Llama-F55036)
+![Deployed](https://img.shields.io/badge/Deployed-Railway_%2B_Vercel-0B0D0E)
+
+</div>
+
+---
+
+## ✨ What is this?
+
+Most YouTube RAG chatbots just answer questions. This one does more — it's a complete **AI study companion** that:
+
+- 💬 Lets you **chat** with any YouTube video like it's a knowledgeable tutor
+- 📝 Generates **structured summaries** in seconds
+- 📚 Creates **college-style PDF notes** — chapter titles, key terms, formulas, revision points
+- ❓ Builds an **interactive MCQ quiz** with instant scoring
+- 💼 Prepares **interview questions** at Basic/Intermediate/Advanced levels
+- ✂️ Analyzes transcripts to **skip filler content** — intros, sponsors, subscribe-reminders
+- 🔐 Supports **real user accounts** — your history, your data, isolated and secure
+- 🎬 Handles **multiple videos** — switch instantly without reprocessing
+
+> Built as a solo project from scratch — architecture, prompts, RAG pipeline, database, auth, and deployment — all hand-engineered and iterated phase by phase.
+
+---
+
+## 🖥️ Try It Live
+
+<div align="center">
+
+### 👉 [**yt-rag-chatbot-alpha.vercel.app**](https://yt-rag-chatbot-alpha.vercel.app/) 👈
+
+*Backend on Railway • Frontend on Vercel • Database on MongoDB Atlas*
+
+</div>
+
+---
 
 ## 🧠 How It Works
-1. User signs up / logs in
-2. User pastes a YouTube URL
-3. System extracts and cleans the video transcript
-4. Transcript is split into chunks and converted to vector embeddings
-5. User asks a question — it gets converted to an embedding
-6. Cosine similarity search finds the most relevant chunks
-7. Gemini LLM generates an answer strictly based on video content
-8. Chat memory allows natural follow-up questions
-9. Smart trimmer identifies and skips unnecessary parts of the video
-10. Notes generator creates structured college-style PDF study notes
-11. MCQ & Interview question generators help with self-testing and prep
-12. All data is isolated per user and persisted in MongoDB
+
+```
+┌─────────────────┐     ┌──────────────────┐     ┌───────────────────┐
+│  Paste YouTube   │ ──▶ │  Extract & Clean  │ ──▶ │  Chunk + Embed     │
+│      URL         │     │    Transcript     │     │  (Gemini Vectors)  │
+└─────────────────┘     └──────────────────┘     └───────────────────┘
+                                                             │
+                                                             ▼
+┌─────────────────┐     ┌──────────────────┐     ┌───────────────────┐
+│  Ask a Question   │ ◀── │  Cosine Similarity │ ◀── │  In-Memory Vector  │
+│                   │     │      Search        │     │      Store         │
+└─────────────────┘     └──────────────────┘     └───────────────────┘
+         │
+         ▼
+┌─────────────────────────────────────────────────────────────┐
+│   Gemini LLM generates an answer strictly from video context  │
+│           + remembers conversation history for follow-ups      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+Plus dedicated pipelines for **Summarization**, **Smart Trimming**, **Notes (PDF)**, **MCQs**, and **Interview Prep** — each with its own prompt engineering and multi-model fallback logic.
+
+---
 
 ## 🛠️ Tech Stack
+
 | Layer | Technology |
 |---|---|
-| Frontend | React.js |
-| Backend | Node.js + Express |
-| Database | MongoDB Atlas |
-| Auth | JWT + bcryptjs |
-| LLM (Chat/Trim/Summary) | Google Gemini API |
-| LLM (Notes/MCQ/Interview) | Groq API — Llama 3.1 8B Instant |
-| Embeddings | Gemini Embedding Model |
-| Vector Search | In-memory Cosine Similarity (per-user isolated) |
-| PDF Generation | PDFKit |
-| Transcript | youtube-transcript npm package |
+| **Frontend** | React.js, custom CSS (glassmorphism + animations) |
+| **Backend** | Node.js, Express.js |
+| **Database** | MongoDB Atlas |
+| **Authentication** | JWT + bcryptjs |
+| **LLM — Chat / Trim / Summary** | Google Gemini API (multi-model fallback) |
+| **LLM — Notes / MCQ / Interview** | Groq API (Llama 3.1 8B Instant) |
+| **Embeddings** | Gemini Embedding Model |
+| **Vector Search** | In-memory Cosine Similarity (per-user isolated) |
+| **PDF Generation** | PDFKit |
+| **Transcript Source** | youtube-transcript (npm) |
+| **Hosting** | Railway (backend) + Vercel (frontend) |
+
+---
 
 ## 📦 Features
-- ✅ User authentication (signup/login/logout)
-- ✅ YouTube transcript extraction
-- ✅ Smart text chunking with overlap
-- ✅ Vector embeddings via Gemini
-- ✅ Cosine similarity search
-- ✅ RAG-based answer generation
-- ✅ Chat memory for follow-up questions
-- ✅ Modern React frontend with animations
-- ✅ Video summarization
-- ✅ College-style PDF notes generation
-- ✅ MCQ generation with interactive quiz and scoring
-- ✅ Interview questions generator (Basic/Intermediate/Advanced)
-- ✅ Multi-video support with instant switching
-- ✅ Per-user data isolation (MongoDB-backed history)
-- 🔧 Smart Video Trimmer — under construction (accuracy improvements pending)
-- 🔲 3D Neural Interface Frontend Redesign
-- 🔲 Deployment
+
+| Feature | Status |
+|---|:---:|
+| User authentication (signup/login/logout) | ✅ |
+| YouTube transcript extraction | ✅ |
+| Smart chunking + vector embeddings | ✅ |
+| Cosine similarity search | ✅ |
+| RAG-based chat with memory | ✅ |
+| Modern animated React UI | ✅ |
+| Video summarization | ✅ |
+| College-style PDF notes generation | ✅ |
+| Interactive MCQ quiz + scoring | ✅ |
+| Interview question generator | ✅ |
+| Multi-video support | ✅ |
+| Per-user data isolation | ✅ |
+| **Live deployment** | ✅ |
+| Smart Video Trimmer | 🔧 *in progress* |
+| 3D interactive frontend redesign | 🔲 *planned* |
+
+---
 
 ## 📁 Project Structure
+
 ```
 yt-rag-chatbot/
 ├── backend/
 │   ├── index.js              # Express server & API routes
-│   ├── db.js                 # MongoDB connection (with DNS fix)
-│   ├── chunking.js           # Text chunking logic
+│   ├── db.js                 # MongoDB connection (Windows DNS fix)
+│   ├── chunking.js           # Transcript chunking logic
 │   ├── embeddings.js         # Gemini embedding generation
-│   ├── vectorStore.js        # In-memory vector store (per-user isolated)
-│   ├── memoryStore.js        # Conversation history (per-user isolated)
-│   ├── chat.js                # RAG prompt & Gemini answer generation
-│   ├── trimmer.js             # Smart Video Trimmer logic
-│   ├── notesGenerator.js     # PDF notes generation (Groq + Gemini hybrid)
-│   ├── mcqGenerator.js       # MCQ generation (Groq)
-│   ├── interviewGenerator.js # Interview questions generation (Groq)
+│   ├── vectorStore.js        # Per-user in-memory vector store
+│   ├── memoryStore.js        # Per-user conversation history
+│   ├── chat.js               # RAG prompt + answer generation
+│   ├── trimmer.js            # Smart Video Trimmer
+│   ├── notesGenerator.js     # PDF notes (Groq + Gemini hybrid)
+│   ├── mcqGenerator.js       # MCQ generation
+│   ├── interviewGenerator.js # Interview question generation
 │   ├── models/
-│   │   ├── User.js           # User schema
-│   │   └── VideoHistory.js   # Video history schema
+│   │   ├── User.js
+│   │   └── VideoHistory.js
 │   ├── middleware/
-│   │   └── auth.js           # JWT verification middleware
-│   ├── routes/
-│   │   └── auth.js           # Signup/Login/Me routes
-│   └── .env                  # Environment variables (not committed)
+│   │   └── auth.js           # JWT verification
+│   └── routes/
+│       └── auth.js           # Signup / Login / Me
 ├── frontend/
-│   ├── src/
-│   │   ├── App.js            # Main React component
-│   │   ├── App.css           # Animations and styling
-│   │   ├── Auth.js           # Login/Signup UI
-│   │   ├── AuthContext.js    # Auth state management
-│   │   └── index.js          # React entry point
-│   └── public/
-├── assets/                   # Screenshots and demo GIF
+│   └── src/
+│       ├── App.js
+│       ├── App.css
+│       ├── Auth.js
+│       └── AuthContext.js
 └── README.md
 ```
 
-## ⚙️ Setup & Installation
+---
+
+## ⚙️ Run It Locally
 
 ```bash
-# Clone the repo
+# 1. Clone the repo
 git clone https://github.com/agarwalmanish3922-code/yt-rag-chatbot.git
 
-# Setup backend
+# 2. Backend setup
 cd yt-rag-chatbot/backend
 npm install
 node index.js
 
-# Setup frontend (open a new terminal)
+# 3. Frontend setup (new terminal)
 cd yt-rag-chatbot/frontend
 npm install
 npm start
 ```
 
-Create a `.env` file in `backend/`:
-```
+Create `backend/.env`:
+```env
 PORT=5000
-GEMINI_API_KEY=your_gemini_api_key_here
-GROQ_API_KEY=your_groq_api_key_here
+GEMINI_API_KEY=your_gemini_api_key
+GROQ_API_KEY=your_groq_api_key
 MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_random_secret_key
 ```
 
-## 🔌 API Endpoints
+---
 
-| Method | Endpoint | Auth Required | Description |
-|---|---|---|---|
-| POST | `/api/auth/signup` | No | Create new user account |
-| POST | `/api/auth/login` | No | Login and receive JWT token |
-| GET | `/api/auth/me` | Yes | Get current logged-in user |
-| POST | `/api/extract` | No | Extract transcript from YouTube URL |
-| POST | `/api/process` | Yes | Chunk and embed transcript |
-| POST | `/api/search` | Yes | Similarity search on stored chunks |
-| POST | `/api/chat` | Yes | Full RAG pipeline — ask a question |
-| POST | `/api/clear-history` | Yes | Reset conversation history |
-| POST | `/api/summarize` | No | Generate structured video summary |
-| POST | `/api/trim` | No | Smart trim — identify content segments |
-| POST | `/api/notes` | No | Generate college-style PDF study notes |
-| POST | `/api/mcq` | No | Generate MCQ quiz |
-| POST | `/api/interview` | No | Generate interview questions |
-| POST | `/api/history/save` | Yes | Save video to user's history |
-| GET | `/api/history/list` | Yes | Get user's video history |
+## 🔌 API Reference
 
-## 📈 Progress
+| Method | Endpoint | Auth | Description |
+|---|---|:---:|---|
+| `POST` | `/api/auth/signup` | — | Create account |
+| `POST` | `/api/auth/login` | — | Login, get JWT |
+| `GET` | `/api/auth/me` | ✅ | Current user |
+| `POST` | `/api/extract` | — | Get transcript from URL |
+| `POST` | `/api/process` | ✅ | Chunk + embed transcript |
+| `POST` | `/api/chat` | ✅ | RAG Q&A |
+| `POST` | `/api/clear-history` | ✅ | Reset chat memory |
+| `POST` | `/api/summarize` | — | Generate summary |
+| `POST` | `/api/trim` | — | Smart trim segments |
+| `POST` | `/api/notes` | — | Generate PDF notes |
+| `POST` | `/api/mcq` | — | Generate MCQ quiz |
+| `POST` | `/api/interview` | — | Generate interview Qs |
+| `POST` | `/api/history/save` | ✅ | Save video to history |
+| `GET` | `/api/history/list` | ✅ | Get user's history |
 
-### ✅ Phase 1 — Transcript Extraction
-- Built `/api/extract` POST endpoint
-- Extracts video ID from any YouTube URL format
-- Fetches and cleans transcript using `youtube-transcript`
-- Returns raw transcript with timestamps for Smart Trimmer
+---
 
-### ✅ Phase 2 — Chunking & Embeddings
-- Built `chunking.js` — 1000-char chunks with 100-char overlap
-- Built `embeddings.js` — vector embeddings via `gemini-embedding-001`
-- Built `/api/process` endpoint with 200ms delay between calls
-- Max 50 chunks per video to prevent quota exhaustion
-- Skips re-processing already-embedded videos for instant switching
+## 📈 Build Journal — Phase by Phase
 
-### ✅ Phase 3 — Vector Storage & Similarity Search
-- Built `vectorStore.js` — in-memory store with cosine similarity
-- Built `/api/search` — returns top 3 relevant chunks with scores
+<details>
+<summary><b>✅ Phase 1 — Transcript Extraction</b></summary>
 
-### ✅ Phase 4 — RAG Answer Generation
-- Built `chat.js` — structured RAG prompt with Gemini
-- Built `/api/chat` — full pipeline: embed → search → answer
-- Multi-model fallback system across 6 Gemini models
+- `/api/extract` endpoint extracts video ID from any YouTube URL format
+- Fetches & cleans transcript using `youtube-transcript`
+- Returns raw timestamped transcript for the Smart Trimmer
+</details>
 
-### ✅ Phase 5 — Chat Memory
-- Built `memoryStore.js` — conversation history per video
-- Gemini understands follow-up questions using history
-- Built `/api/clear-history` endpoint
+<details>
+<summary><b>✅ Phase 2 — Chunking & Embeddings</b></summary>
 
-### ✅ Phase 6 — React Frontend
-- Built modern React UI with glassmorphism design
-- Dark mode with purple/pink gradient accents
-- Animated floating particles and background orbs
-- Side decorations with glowing dots and icons
-- Stats bar showing tech highlights
-- URL input with animated progress bar
-- Loading animation with spinning rings and step indicators
-- Chat interface with typing indicator and message animations
-- Feature cards on landing page
-- New Chat button to switch videos without refresh
-- Responsive design for mobile and desktop
+- 1000-char chunks with 100-char overlap
+- Gemini `gemini-embedding-001` for vector generation
+- Rate-limited with delays, capped at 50 chunks/video
+- Skips re-embedding already-processed videos
+</details>
 
-### ✅ Phase 7 — Video Summarization
-- Added `summarizeVideo()` function in `chat.js`
-- Built `/api/summarize` endpoint
-- Added Summarize button in frontend
-- Structured summary with Main Topic, Key Points, Takeaways, Important Terms
-- Multi-model fallback for quota handling
+<details>
+<summary><b>✅ Phase 3 — Vector Storage & Similarity Search</b></summary>
 
-### ✅ Phase 8 — Smart Video Trimmer (Under Construction)
-- Built `trimmer.js` — single API call with adaptive sampling (~150 sample points)
-- Validates results — rejects unrealistic outputs automatically
-- Returns clickable YouTube timestamp deep links
-- Shows time saved stats with percentage
-- ⚠️ Accuracy improvements in progress — transcript-only analysis has inherent limits
-- Tagline: "Skip the fluff. Keep the knowledge."
+- Custom in-memory cosine similarity engine
+- Returns top-3 most relevant chunks per query
+</details>
 
-### ✅ Phase 9 — Smart PDF Notes Generation
-- Built `notesGenerator.js` — hybrid: Groq for short videos, Gemini for long videos
-- Groq (llama-3.1-8b-instant) — ultra fast, generous free tier
-- Gemini — handles long videos with smart transcript sampling
-- College-style PDF: dark section headers, bullet points, key formulas, examples
-- Includes: chapter title, sections, key terms, quick revision, practice questions
-- Download button — PDF ready on demand
-- Built `/api/notes` endpoint returning PDF binary
+<details>
+<summary><b>✅ Phase 4 — RAG Answer Generation</b></summary>
 
-### ✅ Phase 10 — MCQ Generation
-- Built `mcqGenerator.js` — generates MCQs using Groq
-- Built `/api/mcq` endpoint
-- Interactive quiz UI with 4 options per question
-- Color-coded results — green for correct, red for wrong
-- Score display with percentage and retake option
-- Explanation shown after submission
+- Structured prompt grounds answers strictly in video content
+- Multi-model fallback across 6 Gemini models for quota resilience
+</details>
 
-### ✅ Phase 11 — Interview Questions Generator
-- Built `interviewGenerator.js` — generates interview Qs using Groq
-- Built `/api/interview` endpoint
-- Questions organized by difficulty: Basic, Intermediate, Advanced
-- Each question includes an answering tip
+<details>
+<summary><b>✅ Phase 5 — Chat Memory</b></summary>
 
-### ✅ Phase 12 — Multi-video Support
-- Added video history bar — switch between recent videos instantly
-- Backend skips re-processing already-embedded videos
-- History synced with MongoDB per logged-in user
+- Per-video conversation history enables natural follow-up questions
+</details>
 
-### ✅ Phase 13 — User Authentication
-- Built User & VideoHistory models with Mongoose
-- MongoDB Atlas integration with DNS fix for Windows (`dns.setServers`)
-- JWT-based authentication with 30-day token expiry
-- Password hashing with bcryptjs
-- Signup/Login UI with tab switcher
-- Protected routes via authMiddleware
-- Per-user data isolation — vectorStore and memoryStore keyed by `userId + videoId`
-- Video history persisted in MongoDB
-- Logout functionality
+<details>
+<summary><b>✅ Phase 6 — React Frontend</b></summary>
 
-## 🗺️ Upcoming Phases
-- 🔲 Phase 14 — Smart Trim Accuracy Improvements
-- 🔲 Phase 15 — 3D Neural Interface Frontend Redesign
-- 🔲 Phase 16 — Deployment
-- 🔲 Phase 17 — Final Polish & Live Demo
+- Glassmorphism dark UI, animated particles, gradient orbs
+- Loading animations, typing indicators, responsive design
+</details>
 
-## 🤝 Author
+<details>
+<summary><b>✅ Phase 7 — Video Summarization</b></summary>
+
+- One-click structured summary: Topic, Key Points, Takeaways, Terms
+</details>
+
+<details>
+<summary><b>🔧 Phase 8 — Smart Video Trimmer</b></summary>
+
+- Single-call adaptive sampling (~150 points) identifies filler vs content
+- ⚠️ Accuracy improvements ongoing — transcript-only analysis has natural limits
+</details>
+
+<details>
+<summary><b>✅ Phase 9 — Smart PDF Notes Generation</b></summary>
+
+- Hybrid engine: Groq for short videos, Gemini for long ones
+- College-style PDF — sections, formulas, examples, key terms, revision points
+</details>
+
+<details>
+<summary><b>✅ Phase 10 — MCQ Generation</b></summary>
+
+- Interactive quiz with instant scoring, explanations, retake option
+</details>
+
+<details>
+<summary><b>✅ Phase 11 — Interview Questions Generator</b></summary>
+
+- Basic / Intermediate / Advanced tiers with answering tips
+</details>
+
+<details>
+<summary><b>✅ Phase 12 — Multi-video Support</b></summary>
+
+- Switch between recent videos instantly, no re-processing
+</details>
+
+<details>
+<summary><b>✅ Phase 13 — User Authentication</b></summary>
+
+- MongoDB + JWT + bcrypt — full signup/login system
+- Complete per-user data isolation across chat, embeddings & history
+</details>
+
+<details>
+<summary><b>✅ Phase 14 — Deployment</b></summary>
+
+- Backend live on Railway, frontend live on Vercel
+- MongoDB Atlas in production, CORS locked to frontend domain
+</details>
+
+</details>
+
+---
+
+## 🗺️ What's Next
+
+- 🔲 **Phase 15** — Fix Smart Trim accuracy
+- 🔲 **Phase 16** — 3D "Neural Interface" frontend redesign
+- 🔲 **Phase 17** — Final polish & demo video
+
+---
+
+## 🤝 About the Author
+
 **Manish Agarwal**  
-B.Tech CSE — Uttaranchal University, Dehradun  
-[GitHub](https://github.com/agarwalmanish3922-code)
+B.Tech CSE @ Uttaranchal University, Dehradun
+
+Built this entire project — architecture, prompts, backend, frontend, database, auth, and deployment — from scratch as a solo builder, iterating through 14+ phases.
+
+[GitHub](https://github.com/agarwalmanish3922-code) • [LeetCode](https://leetcode.com/)
+
+---
+
+<div align="center">
+
+**⭐ If you found this project interesting, consider giving it a star!**
+
+</div>

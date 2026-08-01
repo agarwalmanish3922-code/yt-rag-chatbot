@@ -2068,13 +2068,20 @@ body {
   top: 0;
   left: 0;
   width: 100%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #6c63ff, transparent);
-  box-shadow: 0 0 10px #6c63ff, 0 0 20px #6c63ff;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(108, 99, 255, 0.4), transparent);
   z-index: 1;
   pointer-events: none;
-  animation: scanMove 6s linear infinite;
-  opacity: 0.6;
+  animation: scanMove 12s ease-in-out infinite;
+  opacity: 0.3;
+}
+
+@keyframes scanMove {
+  0% { top: -5%; opacity: 0; }
+  10% { opacity: 0.3; }
+  45% { top: 100%; opacity: 0.3; }
+  50% { opacity: 0; }
+  100% { top: -5%; opacity: 0; }
 }
 
 @keyframes scanMove {

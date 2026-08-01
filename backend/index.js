@@ -1,15 +1,22 @@
+const dotenv = require('dotenv');
+dotenv.config();
+// ═══ PROXY SETUP — must be first, before other requires ═══
+if (process.env.PROXY_HOST) {
+  process.env.GLOBAL_AGENT_HTTP_PROXY = `http://${process.env.PROXY_USERNAME}:${process.env.PROXY_PASSWORD}@${process.env.PROXY_HOST}:${process.env.PROXY_PORT}`;
+  const { bootstrap } = require('global-agent');
+  bootstrap();
+  console.log('Proxy configured:', process.env.PROXY_HOST);
+}
 const connectDB = require('./db');
 const authRoutes = require('./routes/auth');
 const authMiddleware = require('./middleware/auth');
 const VideoHistory = require('./models/VideoHistory');
-const dotenv = require('dotenv');
-dotenv.config();
 connectDB();
 
 
 const express = require('express');
 const cors = require('cors');
-const { YoutubeTranscript } = require('youtube-transcript');
+const { getSubtitles } = require('youtube-caption-extractor');
 const { chunkText } = require('./chunking');
 const { getEmbedding } = require('./embeddings');
 const { saveChunks, similaritySearch, isProcessed } = require('./vectorStore');
@@ -61,21 +68,29 @@ function cleanTranscript(transcriptArr) {
 
 app.post('/api/extract', async (req, res) => {
   const { url } = req.body;
-
   if (!url) return res.status(400).json({ error: 'URL is required' });
 
   const videoId = getVideoId(url);
   if (!videoId) return res.status(400).json({ error: 'Invalid YouTube URL' });
 
   try {
-    const transcriptArr = await YoutubeTranscript.fetchTranscript(videoId, {lang: 'en'});
-    const cleanedText = cleanTranscript(transcriptArr);
+    const subtitles = await getSubtitles({ videoID: videoId, lang: 'en' });
 
-    // Also return raw transcript with timestamps for Smart Trimmer
-    const rawTranscript = transcriptArr.map(item => ({
+    if (!subtitles || subtitles.length === 0) {
+      return res.status(400).json({ error: 'No captions found for this video.' });
+    }
+
+    const cleanedText = subtitles
+      .map(item => item.text)
+      .join(' ')
+      .replace(/\[.*?\]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    const rawTranscript = subtitles.map(item => ({
       text: item.text,
-      offset: Math.floor(item.offset / 1000), // convert ms to seconds
-      duration: Math.floor(item.duration / 1000)
+      offset: Math.floor(parseFloat(item.start)),
+      duration: Math.floor(parseFloat(item.dur))
     }));
 
     res.json({
@@ -84,13 +99,10 @@ app.post('/api/extract', async (req, res) => {
       rawTranscript,
       wordCount: cleanedText.split(' ').length
     });
-    } catch(err) {
-      console.error('=== TRANSCRIPT FETCH ERROR ===');
-      console.error('Error message:', err.message);
-      console.error('Error name:', err.name);
-      console.error('Full error:', err);
-      res.status(500).json({ error: 'Could not fetch transcript. Make sure the video has captions.'});
-    }
+  } catch (err) {
+    console.error('Transcript fetch error:', err.message);
+    res.status(500).json({ error: 'Could not fetch transcript. Make sure the video has captions.' });
+  }
 });
 
 

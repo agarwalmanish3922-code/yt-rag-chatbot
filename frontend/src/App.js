@@ -2,11 +2,11 @@ import { useAuth } from './AuthContext';
 import Auth from './Auth';
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import NeuralSphere from './NeuralSphere';
-import CursorTrail from './CursorTrail';
 import './App.css';
 
-const API_BASE = 'https://yt-rag-chatbot-production-7bdd.up.railway.app';
+const API_BASE = process.env.NODE_ENV === 'development' 
+  ? 'http://localhost:5000' 
+  : 'https://yt-rag-chatbot-production-7bdd.up.railway.app';
 
 function App() {
   const { token, user, loading, logout } = useAuth();
@@ -186,6 +186,8 @@ function App() {
       const res = await axios.post(`${API_BASE}/api/chat`, {
         videoId,
         question: userMessage.content
+      },{
+        headers: { Authorization: `Bearer ${token}`}
       });
 
       setMessages(prev => [...prev, {
@@ -356,7 +358,6 @@ function App() {
 
   return (
     <div className="app">
-      <CursorTrail />
 
       <div className="bg-animation">
         <div className="bg-orb orb1"></div>
@@ -366,9 +367,6 @@ function App() {
       </div>
 
       <div className="bg-grid"></div>
-      <div className="bg-grid"></div>
-      <div className="holo-floor"></div>
-      <div className="scan-line"></div>
 
       <div className="particles">
         {[...Array(15)].map((_, i) => (
@@ -475,9 +473,6 @@ function App() {
           <div className="url-card">
             {stage === 'idle' && (
               <div className="url-hero">
-                <div className="neural-sphere-container">
-                  <NeuralSphere />
-                </div>
                 <h2 className="url-hero-title">
                   Chat with any
                   <span className="gradient-text"> YouTube Video</span>

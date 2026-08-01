@@ -3,6 +3,7 @@ import Auth from './Auth';
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import NeuralSphere from './NeuralSphere';
+import CursorTrail from './CursorTrail';
 import './App.css';
 
 const API_BASE = 'https://yt-rag-chatbot-production-7bdd.up.railway.app';
@@ -355,6 +356,7 @@ function App() {
 
   return (
     <div className="app">
+      <CursorTrail />
 
       <div className="bg-animation">
         <div className="bg-orb orb1"></div>
@@ -364,6 +366,9 @@ function App() {
       </div>
 
       <div className="bg-grid"></div>
+      <div className="bg-grid"></div>
+      <div className="holo-floor"></div>
+      <div className="scan-line"></div>
 
       <div className="particles">
         {[...Array(15)].map((_, i) => (

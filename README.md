@@ -295,14 +295,19 @@ JWT_SECRET=your_random_secret_key
 - MongoDB Atlas in production, CORS locked to frontend domain
 </details>
 
+### 🔧 Phase 15 — 3D Neural Interface Frontend (In Progress)
+- Installed Three.js
+- Built rotating 3D neural sphere with glowing nodes, orbit rings, and particle field
+- Mouse-reactive subtle tilt interaction
+- CORS updated to support both local development and production
+
 </details>
 
 ---
 
 ## 🗺️ What's Next
 
-- 🔲 **Phase 15** — Fix Smart Trim accuracy
-- 🔲 **Phase 16** — 3D "Neural Interface" frontend redesign
+- 🔲 **Phase 16** — Fix Smart Trim accuracy
 - 🔲 **Phase 17** — Final polish & demo video
 
 ---

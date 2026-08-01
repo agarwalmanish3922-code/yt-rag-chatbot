@@ -26,7 +26,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const app = express();
 app.use(cors({
-  origin: '*', 
+  origin: 'https://yt-rag-chatbot-alpha.vercel.app', 
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));

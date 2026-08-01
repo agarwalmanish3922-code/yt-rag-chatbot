@@ -310,11 +310,11 @@ JWT_SECRET=your_random_secret_key
 ## 🤝 About the Author
 
 **Manish Agarwal**  
-B.Tech CSE @ Uttaranchal University, Dehradun
+Full-Stack Developer & AI Application Builder
 
 Built this entire project — architecture, prompts, backend, frontend, database, auth, and deployment — from scratch as a solo builder, iterating through 14+ phases.
 
-[GitHub](https://github.com/agarwalmanish3922-code) • [LeetCode](https://leetcode.com/)
+[GitHub](https://github.com/agarwalmanish3922-code)
 
 ---
 

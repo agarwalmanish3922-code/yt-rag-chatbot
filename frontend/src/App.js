@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = 'https://yt-rag-chatbot-production-7bdd.up.railway.app';
 
 function App() {
   const { token, user, loading, logout } = useAuth();

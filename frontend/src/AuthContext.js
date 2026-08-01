@@ -2,7 +2,7 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 
 const AuthContext = createContext();
-const API_BASE = 'http://localhost:5000';
+const API_BASE = 'https://yt-rag-chatbot-production-7bdd.up.railway.app';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);

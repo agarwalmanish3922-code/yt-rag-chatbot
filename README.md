@@ -47,6 +47,8 @@ Most YouTube RAG chatbots just answer questions. This one does more — it's a c
 
 </div>
 
+> ⚠️ **Known limitation:** YouTube occasionally blocks transcript requests coming from cloud server IPs — a common issue for any YouTube-transcript tool hosted on cloud platforms (Railway, Render, AWS, etc.). All features work reliably when run locally. A residential proxy solution is in progress to resolve this for the live deployment.
+
 ---
 
 ## 🧠 How It Works
@@ -87,7 +89,7 @@ Plus dedicated pipelines for **Summarization**, **Smart Trimming**, **Notes (PDF
 | **Embeddings** | Gemini Embedding Model |
 | **Vector Search** | In-memory Cosine Similarity (per-user isolated) |
 | **PDF Generation** | PDFKit |
-| **Transcript Source** | youtube-transcript (npm) |
+| **Transcript Source** | youtube-caption-extractor (npm) |
 | **Hosting** | Railway (backend) + Vercel (frontend) |
 
 ---
@@ -110,7 +112,8 @@ Plus dedicated pipelines for **Summarization**, **Smart Trimming**, **Notes (PDF
 | Per-user data isolation | ✅ |
 | **Live deployment** | ✅ |
 | Smart Video Trimmer | 🔧 *in progress* |
-| 3D interactive frontend redesign | 🔲 *planned* |
+| Reliable proxy for live transcript fetch | 🔧 *in progress* |
+| Professional frontend redesign | 🔲 *planned* |
 
 ---
 
@@ -172,6 +175,12 @@ GEMINI_API_KEY=your_gemini_api_key
 GROQ_API_KEY=your_groq_api_key
 MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_random_secret_key
+
+# Optional — proxy for bypassing YouTube IP blocks in cloud environments
+PROXY_HOST=your_proxy_ip
+PROXY_PORT=your_proxy_port
+PROXY_USERNAME=your_proxy_username
+PROXY_PASSWORD=your_proxy_password
 ```
 
 ---
@@ -203,8 +212,7 @@ JWT_SECRET=your_random_secret_key
 <summary><b>✅ Phase 1 — Transcript Extraction</b></summary>
 
 - `/api/extract` endpoint extracts video ID from any YouTube URL format
-- Fetches & cleans transcript using `youtube-transcript`
-- Returns raw timestamped transcript for the Smart Trimmer
+- Fetches & cleans transcript with timestamps for the Smart Trimmer
 </details>
 
 <details>
@@ -219,7 +227,7 @@ JWT_SECRET=your_random_secret_key
 <details>
 <summary><b>✅ Phase 3 — Vector Storage & Similarity Search</b></summary>
 
-- Custom in-memory cosine similarity engine
+- Custom in-memory cosine similarity engine, per-user isolated
 - Returns top-3 most relevant chunks per query
 </details>
 
@@ -293,13 +301,9 @@ JWT_SECRET=your_random_secret_key
 
 - Backend live on Railway, frontend live on Vercel
 - MongoDB Atlas in production, CORS locked to frontend domain
+- Switched from `youtube-transcript` to `youtube-caption-extractor` after upstream package broke
+- Added proxy support (`global-agent`) to route around YouTube's cloud-IP blocking — partially resolved, ongoing work with residential proxies
 </details>
-
-### 🔧 Phase 15 — 3D Neural Interface Frontend (In Progress)
-- Installed Three.js
-- Built rotating 3D neural sphere with glowing nodes, orbit rings, and particle field
-- Mouse-reactive subtle tilt interaction
-- CORS updated to support both local development and production
 
 </details>
 
@@ -307,8 +311,10 @@ JWT_SECRET=your_random_secret_key
 
 ## 🗺️ What's Next
 
+- 🔲 **Phase 15** — Reliable residential proxy for live transcript fetching
 - 🔲 **Phase 16** — Fix Smart Trim accuracy
-- 🔲 **Phase 17** — Final polish & demo video
+- 🔲 **Phase 17** — Professional frontend redesign
+- 🔲 **Phase 18** — Final polish & demo video
 
 ---
 

@@ -84,10 +84,13 @@ app.post('/api/extract', async (req, res) => {
       rawTranscript,
       wordCount: cleanedText.split(' ').length
     });
-  } catch (err) {
-    console.error('Extract error details:', err.message);
-    res.status(500).json({ error: 'Could not fetch transcript. Make sure the video has captions.' });
-  }
+    } catch(err) {
+      console.error('=== TRANSCRIPT FETCH ERROR ===');
+      console.error('Error message:', err.message);
+      console.error('Error name:', err.name);
+      console.error('Full error:', err);
+      res.status(500).json({ error: 'Could not fetch transcript. Make sure the video has captions.'});
+    }
 });
 
 

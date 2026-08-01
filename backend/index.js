@@ -25,8 +25,19 @@ const { generateInterviewQuestions } = require('./interviewGenerator');
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const app = express();
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://yt-rag-chatbot-alpha.vercel.app'
+];
+
 app.use(cors({
-  origin: 'https://yt-rag-chatbot-alpha.vercel.app', 
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));

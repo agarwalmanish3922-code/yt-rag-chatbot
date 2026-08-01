@@ -2,6 +2,7 @@ import { useAuth } from './AuthContext';
 import Auth from './Auth';
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
+import NeuralSphere from './NeuralSphere';
 import './App.css';
 
 const API_BASE = 'https://yt-rag-chatbot-production-7bdd.up.railway.app';
@@ -469,6 +470,9 @@ function App() {
           <div className="url-card">
             {stage === 'idle' && (
               <div className="url-hero">
+                <div className="neural-sphere-container">
+                  <NeuralSphere />
+                </div>
                 <h2 className="url-hero-title">
                   Chat with any
                   <span className="gradient-text"> YouTube Video</span>

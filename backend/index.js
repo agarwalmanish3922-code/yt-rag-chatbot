@@ -68,7 +68,7 @@ app.post('/api/extract', async (req, res) => {
   if (!videoId) return res.status(400).json({ error: 'Invalid YouTube URL' });
 
   try {
-    const transcriptArr = await YoutubeTranscript.fetchTranscript(videoId);
+    const transcriptArr = await YoutubeTranscript.fetchTranscript(videoId, {lang: 'en'});
     const cleanedText = cleanTranscript(transcriptArr);
 
     // Also return raw transcript with timestamps for Smart Trimmer
@@ -85,6 +85,7 @@ app.post('/api/extract', async (req, res) => {
       wordCount: cleanedText.split(' ').length
     });
   } catch (err) {
+    console.error('Extract error details:', err.message);
     res.status(500).json({ error: 'Could not fetch transcript. Make sure the video has captions.' });
   }
 });

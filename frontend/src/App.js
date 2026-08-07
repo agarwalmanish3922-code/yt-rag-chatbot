@@ -81,6 +81,13 @@ function App() {
   const handleAnalyze = async () => {
     if (!url.trim()) return;
     setError('');
+      // Check if this URL is already in history — reuse instead of re-extracting
+    const existingVideo = videoHistory.find(v => v.url === url.trim());
+    if (existingVideo) {
+      console.log('Video already in history, reusing cached data');
+      await handleSwitchVideo(existingVideo);
+      return;
+    }
     setIsProcessing(true);
     setStage('extracting');
     setMessages([]);

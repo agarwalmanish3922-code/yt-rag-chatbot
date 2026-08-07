@@ -16,6 +16,7 @@ connectDB();
 
 const express = require('express');
 const cors = require('cors');
+const axios = require('axios');
 const { getSubtitles } = require('youtube-caption-extractor');
 const { chunkText } = require('./chunking');
 const { getEmbedding } = require('./embeddings');
@@ -73,34 +74,72 @@ app.post('/api/extract', async (req, res) => {
   const videoId = getVideoId(url);
   if (!videoId) return res.status(400).json({ error: 'Invalid YouTube URL' });
 
+  // Try free method first (works fine on localhost, sometimes fails on cloud)
   try {
     const subtitles = await getSubtitles({ videoID: videoId, lang: 'en' });
 
-    if (!subtitles || subtitles.length === 0) {
+    if (subtitles && subtitles.length > 0) {
+      const cleanedText = subtitles
+        .map(item => item.text)
+        .join(' ')
+        .replace(/\[.*?\]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      const rawTranscript = subtitles.map(item => ({
+        text: item.text,
+        offset: Math.floor(parseFloat(item.start)),
+        duration: Math.floor(parseFloat(item.dur))
+      }));
+
+      console.log('Transcript fetched via free method');
+      return res.json({
+        videoId,
+        transcript: cleanedText,
+        rawTranscript,
+        wordCount: cleanedText.split(' ').length
+      });
+    }
+  } catch (err) {
+    console.log('Free method failed, falling back to Supadata:', err.message);
+  }
+
+  // Fallback — Supadata (reliable, works on cloud, handles IP blocking)
+  try {
+    const response = await axios.get('https://api.supadata.ai/v1/youtube/transcript', {
+      params: { videoId },
+      headers: { 'x-api-key': process.env.SUPADATA_API_KEY }
+    });
+
+    const content = response.data.content;
+
+    if (!content || content.length === 0) {
       return res.status(400).json({ error: 'No captions found for this video.' });
     }
 
-    const cleanedText = subtitles
+    const cleanedText = content
       .map(item => item.text)
       .join(' ')
       .replace(/\[.*?\]/g, '')
       .replace(/\s+/g, ' ')
       .trim();
 
-    const rawTranscript = subtitles.map(item => ({
+    const rawTranscript = content.map(item => ({
       text: item.text,
-      offset: Math.floor(parseFloat(item.start)),
-      duration: Math.floor(parseFloat(item.dur))
+      offset: Math.floor(item.offset / 1000),
+      duration: Math.floor(item.duration / 1000)
     }));
 
+    console.log('Transcript fetched via Supadata');
     res.json({
       videoId,
       transcript: cleanedText,
       rawTranscript,
       wordCount: cleanedText.split(' ').length
     });
+
   } catch (err) {
-    console.error('Transcript fetch error:', err.message);
+    console.error('Supadata fetch error:', err.message);
     res.status(500).json({ error: 'Could not fetch transcript. Make sure the video has captions.' });
   }
 });

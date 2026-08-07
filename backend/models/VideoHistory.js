@@ -6,17 +6,20 @@ const videoHistorySchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  videoId: {
-    type: String,
-    required: true
-  },
+  videoId: { type: String, required: true },
   title: String,
   url: String,
   transcript: String,
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
+  rawTranscript: Array,
+
+  // Cached AI results
+  summary: { type: String, default: '' },
+  mcqs: { type: mongoose.Schema.Types.Mixed, default: null },
+  interviewQuestions: { type: mongoose.Schema.Types.Mixed, default: null },
+  trimResult: { type: mongoose.Schema.Types.Mixed, default: null },
+  chatMessages: { type: Array, default: [] },
+
+  createdAt: { type: Date, default: Date.now }
 });
 
 module.exports = mongoose.model('VideoHistory', videoHistorySchema);

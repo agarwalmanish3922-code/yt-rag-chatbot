@@ -134,40 +134,66 @@ function App() {
     }
   };
 
-  const handleSwitchVideo = async (historyItem) => {
-    if (historyItem.videoId === videoId) return; // already active
+const handleSwitchVideo = async (historyItem) => {
+  if (historyItem.videoId === videoId) return;
 
-    setError('');
-    resetAllTools();
-    setMessages([]);
-    setUrl(historyItem.url);
-    setVideoId(historyItem.videoId);
-    setVideoTitle(historyItem.title);
-    setTranscript(historyItem.transcript);
-    setRawTranscript(historyItem.rawTranscript);
-    setStage('processing');
-    setIsProcessing(true);
+  setError('');
+  resetAllTools();
+  setMessages([]);
+  setUrl(historyItem.url);
+  setVideoId(historyItem.videoId);
+  setVideoTitle(historyItem.title);
+  setTranscript(historyItem.transcript);
+  setRawTranscript(historyItem.rawTranscript);
+  setStage('processing');
+  setIsProcessing(true);
 
-    try {
-      // Re-process to ensure embeddings exist in backend memory
-      await axios.post(`${API_BASE}/api/process`, {
-        videoId: historyItem.videoId,
-        transcript: historyItem.transcript
-      });
+  try {
+    // Ensure embeddings exist (instant if already processed)
+    await axios.post(`${API_BASE}/api/process`, {
+      videoId: historyItem.videoId,
+      transcript: historyItem.transcript
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
 
-      setStage('ready');
+    // Fetch cached results (summary, mcqs, interview, trim, chat)
+    const cachedRes = await axios.get(`${API_BASE}/api/history/${historyItem.videoId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    const cached = cachedRes.data.history;
+
+    setStage('ready');
+
+    // Restore chat messages if any exist, else show default greeting
+    if (cached.chatMessages && cached.chatMessages.length > 0) {
+      setMessages(cached.chatMessages.map(m => ({
+        role: m.role,
+        content: m.content,
+        timestamp: new Date(m.timestamp)
+      })));
+    } else {
       setMessages([{
         role: 'assistant',
         content: `✅ Switched to ${historyItem.title}. Ask me anything about this video!`,
         timestamp: new Date()
       }]);
-    } catch (err) {
-      setError('Failed to switch video. Please try again.');
-      setStage('idle');
-    } finally {
-      setIsProcessing(false);
     }
-  };
+
+    // Restore cached AI results
+    if (cached.summary) setSummary(cached.summary);
+    if (cached.mcqs) setMcqs(cached.mcqs);
+    if (cached.interviewQuestions) setInterviewQs(cached.interviewQuestions);
+    if (cached.trimResult) setTrimResult(cached.trimResult);
+
+  } catch (err) {
+    setError('Failed to switch video. Please try again.');
+    setStage('idle');
+  } finally {
+    setIsProcessing(false);
+  }
+};
 
   const handleAsk = async () => {
     if (!question.trim() || !videoId || isAsking) return;

@@ -223,6 +223,20 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
     addToHistory(userId, videoId, 'user', question);
     addToHistory(userId, videoId, 'assistant', answer);
 
+    await VideoHistory.findOneAndUpdate(
+      { userId, videoId },
+      {
+        $push: {
+          chatMessages: {
+            $each: [
+              { role: 'user', content: question, timestamp: new Date() },
+              { role: 'assistant', content: answer, timestamp: new Date() }
+            ]
+          }
+        }
+      }
+    );
+
     res.json({
       question,
       answer,
@@ -246,21 +260,23 @@ app.post('/api/clear-history', authMiddleware, (req, res) => {
   res.json({ message: 'Conversation history cleared successfully' });
 });
 
-app.post('/api/summarize', async (req, res) => {
+app.post('/api/summarize', authMiddleware, async (req, res) => {
   const { videoId, transcript } = req.body;
+  const userId = req.userId;
 
   if (!videoId || !transcript) {
     return res.status(400).json({ error: 'videoId and transcript are required' });
   }
 
   try {
-    console.log(`Summarizing video: ${videoId}`);
     const summary = await summarizeVideo(transcript);
 
-    res.json({
-      videoId,
-      summary
-    });
+    await VideoHistory.findOneAndUpdate(
+      { userId, videoId },
+      { summary }
+    );
+
+    res.json({ videoId, summary });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to summarize video' });
@@ -291,16 +307,22 @@ app.post('/api/notes', async (req, res) => {
   }
 });
 
-app.post('/api/mcq', async (req, res) => {
+app.post('/api/mcq', authMiddleware, async (req, res) => {
   const { videoId, transcript } = req.body;
+  const userId = req.userId;
 
   if (!videoId || !transcript) {
     return res.status(400).json({ error: 'videoId and transcript are required' });
   }
 
   try {
-    console.log(`Generating MCQs for video: ${videoId}`);
     const result = await generateMCQs(transcript);
+
+    await VideoHistory.findOneAndUpdate(
+      { userId, videoId },
+      { mcqs: result }
+    );
+
     res.json({ videoId, ...result });
   } catch (err) {
     console.error(err);
@@ -308,16 +330,22 @@ app.post('/api/mcq', async (req, res) => {
   }
 });
 
-app.post('/api/interview', async (req, res) => {
+app.post('/api/interview', authMiddleware, async (req, res) => {
   const { videoId, transcript } = req.body;
+  const userId = req.userId;
 
   if (!videoId || !transcript) {
     return res.status(400).json({ error: 'videoId and transcript are required' });
   }
 
   try {
-    console.log(`Generating interview questions for video: ${videoId}`);
     const result = await generateInterviewQuestions(transcript);
+
+    await VideoHistory.findOneAndUpdate(
+      { userId, videoId },
+      { interviewQuestions: result }
+    );
+
     res.json({ videoId, ...result });
   } catch (err) {
     console.error(err);
@@ -325,21 +353,23 @@ app.post('/api/interview', async (req, res) => {
   }
 });
 
-app.post('/api/trim', async (req, res) => {
+app.post('/api/trim', authMiddleware, async (req, res) => {
   const { videoId, rawTranscript } = req.body;
+  const userId = req.userId;
 
   if (!videoId || !rawTranscript) {
     return res.status(400).json({ error: 'videoId and rawTranscript are required' });
   }
 
   try {
-    console.log(`Trimming video: ${videoId} — ${rawTranscript.length} transcript items`);
     const result = await trimVideo(rawTranscript, videoId);
 
-    res.json({
-      videoId,
-      ...result
-    });
+    await VideoHistory.findOneAndUpdate(
+      { userId, videoId },
+      { trimResult: result }
+    );
+
+    res.json({ videoId, ...result });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to trim video' });
@@ -380,6 +410,24 @@ app.get('/api/history/list', authMiddleware, async (req, res) => {
     res.json({ history });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch history' });
+  }
+});
+
+// Get full cached data for a specific video (protected route)
+app.get('/api/history/:videoId', authMiddleware, async (req, res) => {
+  try {
+    const record = await VideoHistory.findOne({
+      userId: req.userId,
+      videoId: req.params.videoId
+    });
+
+    if (!record) {
+      return res.status(404).json({ error: 'No history found for this video' });
+    }
+
+    res.json({ history: record });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch video history' });
   }
 });
 
